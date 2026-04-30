@@ -11,14 +11,6 @@ An interactive web application to explore Buddhist temples across all U.S. state
 | ORM      | Prisma ORM                          |
 | Database | MongoDB Atlas                       |
 
-## How Prisma + MongoDB work together
-
-```
-React Frontend → Express API → Prisma ORM → MongoDB Atlas
-```
-
-Prisma is the middleman. MongoDB stores the data. You never write raw MongoDB queries — Prisma handles it.
-
 ## Project Structure
 
 ```
