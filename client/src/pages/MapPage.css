@@ -1,0 +1,29 @@
+.map-page {
+  padding: 2rem;
+  text-align: center;
+}
+
+.map-page h1 {
+  color: #7b2d8b;
+  margin-bottom: 1rem;
+}
+
+.placeholder-text {
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+.map-placeholder {
+  width: 100%;
+  max-width: 900px;
+  height: 500px;
+  margin: 0 auto;
+  background: #e8e0f0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7b2d8b;
+  font-size: 1.2rem;
+  border: 2px dashed #7b2d8b;
+}
