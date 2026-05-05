@@ -27,3 +27,89 @@
   font-size: 1.2rem;
   border: 2px dashed #7b2d8b;
 }
+
+.map-page {
+  padding: 24px;
+  font-family: Arial, sans-serif;
+}
+
+.map-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.map-header h1 {
+  margin-bottom: 8px;
+  color: #222;
+}
+
+.map-header p {
+  color: #555;
+}
+
+.map-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.map-section {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+
+.map-wrapper {
+  width: 100%;
+}
+
+.temple-panel {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+
+.temple-panel h3 {
+  margin-top: 0;
+  color: #222;
+}
+
+.temple-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.temple-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fafafa;
+}
+
+.temple-card h4 {
+  margin: 12px 12px 8px;
+  color: #111827;
+}
+
+.temple-card p {
+  margin: 8px 12px;
+  color: #374151;
+  font-size: 14px;
+}
+
+.temple-image {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+}
+
+@media (max-width: 900px) {
+  .map-content {
+    grid-template-columns: 1fr;
+  }
+}
