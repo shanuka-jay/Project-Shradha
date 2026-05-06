@@ -16,9 +16,9 @@ app.use(express.json());
 async function main() {
   try {
     await prisma.$connect();
-    console.log('✅ Prisma connected to MongoDB');
+    console.log('Prisma connected to MongoDB');
   } catch (err) {
-    console.error('❌ Prisma connection error:', err);
+    console.error('Prisma connection error:', err);
     process.exit(1);
   }
 }
@@ -41,5 +41,5 @@ process.on('SIGINT', async () => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`server running on http://localhost:${PORT}`);
 });

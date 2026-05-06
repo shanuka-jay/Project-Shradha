@@ -5,9 +5,9 @@ const prisma = require('../prismaClient');
 // POST contact form submission
 router.post('/', async (req, res) => {
   try {
-    const { name, email, message } = req.body;
+    const { firstName, lastName, email, templeName, purpose, message } = req.body;
     const submission = await prisma.contact.create({
-      data: { name, email, message },
+      data: { firstName, lastName, email, templeName, purpose, message },
     });
     res.status(201).json({ message: 'Message received!', data: submission });
   } catch (err) {
