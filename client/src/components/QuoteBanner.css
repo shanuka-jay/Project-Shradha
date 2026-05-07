@@ -1,0 +1,66 @@
+/* ===== QUOTE BANNER ===== */
+.quote {
+  background: linear-gradient(135deg, #8b6220 0%, #c9a050 40%, #a07830 70%, #6b4a18 100%);
+  padding: 80px 0;
+}
+
+.quote__inner {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 40px;
+  text-align: center;
+}
+
+.quote__text {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: clamp(20px, 2.5vw, 28px);
+  font-weight: 300;
+  color: #fff;
+  line-height: 1.55;
+  margin-bottom: 24px;
+  quotes: none;
+}
+
+.quote__divider {
+  width: 40px;
+  height: 1px;
+  background: rgba(255,255,255,0.4);
+  margin: 0 auto 16px;
+}
+
+.quote__author {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.95);
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.quote__role {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 300;
+  color: rgba(255,255,255,0.6);
+  letter-spacing: 0.3px;
+  margin-bottom: 24px;
+}
+
+.quote__dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.quote__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  display: block;
+}
+
+.quote__dot--active {
+  background: rgba(255,255,255,0.9);
+}

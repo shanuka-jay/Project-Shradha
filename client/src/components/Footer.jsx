@@ -1,16 +1,27 @@
-import { Link } from 'react-router-dom'
-import './Footer.css'
+import React from 'react';
+import { Link } from 'react-router-dom';
+import './Footer.css';
 
-function Footer() {
+const Footer = () => {
   return (
     <footer className="footer">
-      <div className="footer-content">
-        <div className="footer-col brand-col">
-          <Link to="/" className="footer-logo">Sadd<span>ha</span>.org</Link>
-          <p className="footer-desc">A sacred digital directory of Sri Lankan<br/>Buddhist Temples across the United<br/>States.</p>
+      <div className="footer__inner">
+        {/* Logo & tagline */}
+        <div className="footer__brand">
+          <p className="footer__logo">Sadd<span>ha</span>.org</p>
+          <p className="footer__tagline">
+            A sacred directory of Sri Lankan Buddhist Temples across the United States, preserving Dhamma and community across the nation.
+          </p>
+          <div className="footer__social">
+            <a href="#" className="footer__social-link">f</a>
+            <a href="#" className="footer__social-link">in</a>
+            <a href="#" className="footer__social-link">yt</a>
+          </div>
         </div>
-        <div className="footer-col">
-          <h4>PAGES</h4>
+
+        {/* Pages */}
+        <div className="footer__col">
+          <p className="footer__col-title">Pages</p>
           <ul>
             <li><Link to="/">Home</Link></li>
             <li><Link to="/about">About</Link></li>
@@ -18,8 +29,10 @@ function Footer() {
             <li><Link to="/contact">Contact</Link></li>
           </ul>
         </div>
-        <div className="footer-col">
-          <h4>REGIONS</h4>
+
+        {/* Regions */}
+        <div className="footer__col">
+          <p className="footer__col-title">Regions</p>
           <ul>
             <li><a href="#">East Coast</a></li>
             <li><a href="#">West Coast</a></li>
@@ -27,21 +40,23 @@ function Footer() {
             <li><a href="#">South</a></li>
           </ul>
         </div>
-        <div className="footer-col">
-          <h4>CONTACT</h4>
+
+        {/* Contact */}
+        <div className="footer__col">
+          <p className="footer__col-title">Contact</p>
           <ul>
-            <li><a href="mailto:saddha.usa@gmail.com">saddha.usa@gmail.com</a></li>
+            <li>saddha.usa@gmail.com</li>
             <li>+1 240 351 1765</li>
             <li>Washington DC, USA</li>
           </ul>
         </div>
       </div>
-      <div className="footer-bottom">
-        <p>© 2025 Saddha.org — All Rights Reserved</p>
-        <p>Designed & Built by Fuchsius</p>
+
+      <div className="footer__bottom">
+        <p>© {new Date().getFullYear()} Saddha.org — All rights reserved.</p>
       </div>
     </footer>
-  )
-}
+  );
+};
 
-export default Footer
+export default Footer;

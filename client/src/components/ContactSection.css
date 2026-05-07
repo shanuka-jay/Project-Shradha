@@ -1,0 +1,231 @@
+/* ===== CONTACT SECTION ===== */
+.contact {
+  background: #fbfaf8;
+  padding: 80px 0;
+}
+
+.contact__inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 80px;
+}
+
+.contact__header {
+  margin-bottom: 40px;
+}
+
+.contact__heading {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(28px, 3vw, 42px);
+  font-weight: 300;
+  color: #1a1205;
+  margin: 0;
+}
+
+.contact__heading em {
+  font-style: italic;
+  color: #c9a050;
+}
+
+/* 2-col layout */
+.contact__body {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 40px;
+  align-items: start;
+}
+
+/* ---- Connect Card ---- */
+.contact__card {
+  position: relative;
+  height: 520px;
+  border-radius: 6px;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: flex-end;
+}
+
+.contact__card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10,5,0,0.35) 0%, rgba(10,5,0,0.82) 100%);
+}
+
+.contact__card-content {
+  position: relative;
+  z-index: 1;
+  padding: 32px 28px;
+  color: #fff;
+  width: 100%;
+}
+
+.contact__card-content h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 300;
+  color: #fff;
+  margin-bottom: 12px;
+  line-height: 1.2;
+}
+
+.contact__card-content h3 span {
+  color: #c9a050;
+}
+
+.contact__card-content p {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 300;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.72);
+  margin-bottom: 20px;
+}
+
+.contact__info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.contact__info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 300;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.5;
+}
+
+.contact__info-icon {
+  font-size: 11px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.contact__social {
+  display: flex;
+  gap: 8px;
+}
+
+.contact__social-link {
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.6);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.contact__social-link:hover {
+  border-color: #c9a050;
+  color: #c9a050;
+}
+
+/* ---- Form ---- */
+.contact__form-wrap {
+  background: #fff;
+  border: 1px solid #f0ebe2;
+  border-radius: 6px;
+  padding: 40px 36px;
+}
+
+.contact__form-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 300;
+  color: #1a1205;
+  margin-bottom: 4px;
+}
+
+.contact__form-sub {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 300;
+  color: #9a8e82;
+  margin-bottom: 28px;
+}
+
+.contact__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.contact__form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.contact__form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.contact__form-group label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  color: #4a3220;
+  letter-spacing: 0.3px;
+}
+
+.contact__form-group input,
+.contact__form-group textarea {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 300;
+  color: #1a1205;
+  background: #faf9f7;
+  border: 1px solid #e8e0d4;
+  border-radius: 3px;
+  padding: 10px 12px;
+  outline: none;
+  transition: border-color 0.2s;
+  resize: none;
+}
+
+.contact__form-group input::placeholder,
+.contact__form-group textarea::placeholder {
+  color: #c0b8ae;
+}
+
+.contact__form-group input:focus,
+.contact__form-group textarea:focus {
+  border-color: #c9a050;
+  background: #fff;
+}
+
+.contact__submit {
+  width: 100%;
+  background: #c9a050;
+  color: #1c120a;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 14px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 4px;
+}
+
+.contact__submit:hover {
+  background: #b38b41;
+}
