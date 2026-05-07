@@ -1,7 +1,7 @@
 /* ===== FEATURED TEMPLES ===== */
 .featured {
   background: #fbfaf8;
-  padding: 72px 0;
+  padding: 72px 0 80px;
 }
 
 .featured__inner {
@@ -10,7 +10,7 @@
   padding: 0 80px;
 }
 
-/* Header row */
+/* ---- Header ---- */
 .featured__header {
   display: flex;
   align-items: flex-end;
@@ -54,7 +54,7 @@
   font-weight: 500;
   color: #c9a050;
   text-decoration: none;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   transition: color 0.2s;
 }
 
@@ -80,6 +80,7 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
+  line-height: 1;
 }
 
 .featured__arrow-btn:hover {
@@ -87,76 +88,89 @@
   color: #fff;
 }
 
-/* Temple Card */
-.featured__card {
+/* ---- Main layout ---- */
+.featured__layout {
   display: grid;
-  grid-template-columns: 340px 1fr;
-  gap: 48px;
-  align-items: start;
-  background: #fff;
-  border: 1px solid #f0ebe2;
+  grid-template-columns: 380px 1fr;
+  gap: 0;
+  align-items: stretch;
+  border: 1px solid #e8e0d4;
   border-radius: 4px;
   overflow: hidden;
+  background: #fff;
+  min-height: 340px;
 }
 
-.featured__card-img {
-  height: 320px;
+/* ---- Left image ---- */
+.featured__img-wrap {
+  position: relative;
   overflow: hidden;
 }
 
-.featured__card-img img {
+.featured__img-wrap img {
   width: 100%;
   height: 100%;
+  min-height: 340px;
   object-fit: cover;
   display: block;
-  transition: transform 0.4s;
+  transition: transform 0.5s ease;
 }
 
-.featured__card:hover .featured__card-img img {
+.featured__layout:hover .featured__img-wrap img {
   transform: scale(1.03);
 }
 
-.featured__card-info {
-  padding: 40px 40px 40px 0;
+.featured__img-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, rgba(0,0,0,0.08) 0%, transparent 100%);
 }
 
-.featured__card-state {
+/* ---- Right text info ---- */
+.featured__info {
+  padding: 44px 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.featured__info-state {
   font-family: 'DM Sans', sans-serif;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 2px;
   text-transform: uppercase;
   color: #c9a050;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
-.featured__card-name {
+.featured__info-name {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 28px;
+  font-size: clamp(22px, 2.4vw, 30px);
   font-weight: 300;
   color: #1a1205;
   line-height: 1.2;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
-.featured__card-address {
+.featured__info-address {
   font-family: 'DM Sans', sans-serif;
   font-size: 11px;
   font-weight: 300;
   color: #9a8e82;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
-.featured__card-desc {
+.featured__info-desc {
   font-family: 'DM Sans', sans-serif;
   font-size: 12px;
   font-weight: 300;
-  line-height: 1.75;
+  line-height: 1.8;
   color: #6b5f54;
   margin-bottom: 28px;
 }
 
-.featured__card-cta {
+.featured__info-cta {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -168,11 +182,12 @@
   letter-spacing: 1px;
   text-transform: uppercase;
   text-decoration: none;
-  padding: 11px 22px;
+  padding: 12px 24px;
   border-radius: 2px;
+  align-self: flex-start;
   transition: background 0.2s;
 }
 
-.featured__card-cta:hover {
+.featured__info-cta:hover {
   background: #b38b41;
 }

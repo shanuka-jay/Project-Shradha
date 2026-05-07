@@ -2,11 +2,13 @@
 .stats {
   background: #ffffff;
   border-bottom: 1px solid #f0ebe2;
+  border-top: 1px solid #f0ebe2;
 }
 
 .stats__grid {
-  max-width: 1920px;
+  max-width: 1280px;
   margin: 0 auto;
+  padding: 0 80px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
 }
@@ -16,9 +18,10 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 36px 24px;
-  gap: 4px;
+  padding: 40px 24px;
+  gap: 6px;
   border-right: 1px solid #f0ebe2;
+  text-align: center;
   transition: background 0.2s;
 }
 
@@ -27,23 +30,19 @@
 }
 
 .stats__card:hover {
-  background: #fbfaf8;
+  background: #faf9f7;
 }
 
-.stats__icon {
-  font-size: 18px;
-  color: #c9a050;
-  margin-bottom: 6px;
-  display: block;
-  /* Use a proper icon approach */
+.stats__icon-wrap {
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-
-/* Gold decorative icon */
-.stats__card:nth-child(1) .stats__icon::before { content: ''; display: block; width: 18px; height: 18px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23c9a050'%3E%3Cpath d='M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18l8 4V17l-8 4-8-4V8.18l8-4z'/%3E%3C/svg%3E") center/contain no-repeat; }
 
 .stats__value {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 40px;
+  font-size: 44px;
   font-weight: 300;
   color: #1a1205;
   line-height: 1;
@@ -52,9 +51,8 @@
 .stats__label {
   font-family: 'DM Sans', sans-serif;
   font-size: 9px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: #c9a050;
-  margin-top: 2px;
 }
