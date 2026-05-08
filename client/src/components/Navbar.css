@@ -1,12 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap');
-
 .navbar {
-  background-color: #ffffff;
+  background-color: var(--white);
   border-bottom: 1px solid #e8e5db;
   position: sticky;
   top: 0;
   z-index: 1000;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-nav);
 }
 
 .navbar-container {
@@ -20,164 +18,97 @@
 }
 
 .navbar-brand {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.6rem;
-  font-weight: 400;
-  color: #3a352f;
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--dark-text);
   text-decoration: none;
+  letter-spacing: -0.5px;
 }
 
 .navbar-brand span {
-  color: #c19b6c;
+  color: var(--primary-gold);
 }
 
-/* Default Desktop Menu Layout */
 .navbar-menu {
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: 50px;
 }
 
 .navbar-links {
   list-style: none;
   display: flex;
-  flex-direction: row;
-  gap: 28px;
-  margin: 0;
-  padding: 0;
+  gap: 40px;
 }
 
 .navbar-links a {
   text-decoration: none;
-  color: #76746f;
-  font-size: 0.8rem;
+  color: #888;
+  font-size: 11px;
   font-weight: 500;
-  letter-spacing: 1.5px;
-  transition: color 0.2s;
-  display: inline-block;
-  padding: 0;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  transition: color 0.3s ease;
 }
 
 .navbar-links a:hover,
 .navbar-links a.active {
-  color: #c19b6c;
+  color: var(--primary-gold);
 }
 
 .btn-explore {
-  background-color: #c19b6c;
-  color: white;
+  background-color: var(--primary-gold);
+  color: var(--white);
   text-decoration: none;
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 1px;
-  padding: 12px 24px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  padding: 12px 25px;
+  text-transform: uppercase;
   border-radius: 4px;
-  margin-top: 0;
-  align-self: auto;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
 }
 
 .btn-explore:hover {
-  background-color: #ab8657;
+  background-color: var(--primary-gold);
+  transform: translateY(-2px);
 }
 
-/* Hide Hamburger Menu Icon on Desktop */
+/* Mobile Toggle */
 .menu-icon {
   display: none;
   cursor: pointer;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 5px;
-  z-index: 1001;
-  background-color: #c19b6c;
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
-  transition: background-color 0.3s;
 }
 
-.menu-icon:hover {
-  background-color: #ab8657;
-}
-
-.menu-icon div {
-  width: 22px;
-  height: 2px;
-  background-color: #ffffff;
-  border-radius: 2px;
-  transition: all 0.3s ease-in-out;
-}
-
-/* Hamburger Animation */
-.menu-icon.open {
-  background-color: #c19b6c;
-}
-.menu-icon.open .bar1 {
-  transform: translateY(7px) rotate(45deg);
-}
-.menu-icon.open .bar2 {
-  opacity: 0;
-}
-.menu-icon.open .bar3 {
-  transform: translateY(-7px) rotate(-45deg);
-}
-
-
-/* MOBILE RESPONSIVE LAYOUT */
 @media (max-width: 768px) {
-  .navbar-container {
-    padding: 0 5%;
-  }
-
-  /* Show Hamburger Menu Icon on Mobile */
+  .section-padding { padding: 80px 5%; }
+  
   .menu-icon {
-    display: flex;
+    display: block;
+    z-index: 1001;
   }
 
-  /* Slide-in Menu Drawer for Mobile */
   .navbar-menu {
     position: fixed;
-    top: 80px;
-    left: -100%;
-    width: 100%;
-    height: calc(100vh - 80px);
-    background-color: #ffffff;
+    top: 0;
+    right: -100%;
+    width: 80%;
+    height: 100vh;
+    background: var(--white);
     flex-direction: column;
-    justify-content: flex-start;
-    padding-top: 40px;
-    gap: 30px;
-    transition: left 0.3s ease;
-    box-shadow: 2px 5px 10px rgba(0,0,0,0.1);
-    z-index: 1000;
+    padding: 100px 40px;
+    transition: 0.4s ease;
+    box-shadow: -10px 0 30px rgba(0,0,0,0.1);
   }
 
   .navbar-menu.active {
-    left: 0;
+    right: 0;
   }
 
   .navbar-links {
     flex-direction: column;
-    align-items: center;
-    gap: 20px;
-    width: 100%;
-  }
-
-  .navbar-links li {
-    width: 100%;
-    text-align: center;
-  }
-
-  .navbar-links a {
-    display: block;
-    font-size: 1.1rem;
-    padding: 10px 0;
-  }
-
-  .btn-explore {
-    margin-top: 10px;
-    font-size: 1rem;
-    padding: 14px 30px;
-    align-self: center;
+    gap: 30px;
+    margin-bottom: 40px;
   }
 }
