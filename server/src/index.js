@@ -30,7 +30,7 @@ app.use('/api/contact', contactRoutes);
 
 // Health check
 app.get('/', (req, res) => {
-  res.json({ message: '✅ Saddha Temple Map API is running!' });
+  res.json({ message: 'Saddha Temple Map API is running' });
 });
 
 // Graceful shutdown
