@@ -270,7 +270,7 @@ const About = () => {
               <div className="teacher-info">
                 <h4>{teacher.name}</h4>
                 <p>{teacher.loc}</p>
-                <Link to="#" className="read-more">VIEW PROFILE →</Link>
+                <Link to="/profile" className="read-more">VIEW PROFILE →</Link>
               </div>
             </div>
           ))}
