@@ -7,6 +7,10 @@
   font-family: Georgia, "Times New Roman", serif;
 }
 
+.temple-map-page:has(.temple-details-modal) {
+  overflow: hidden;
+}
+
 .directory-sidebar {
   background: #f5f1e8;
   border-right: 1px solid #e6dece;
@@ -218,6 +222,16 @@
   cursor: pointer;
 }
 
+.pin-marker circle {
+  transition: r 160ms ease, fill 160ms ease;
+}
+
+.pin-marker:hover circle,
+.pin-marker.active circle {
+  r: 9;
+  fill: #c19a3b;
+}
+
 .details-panel {
   background: #f8f5ef;
   border-left: 1px solid #e6dece;
@@ -347,6 +361,33 @@
   line-height: 1.6;
 }
 
+.temple-details-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  padding: 28px;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(27, 21, 14, 0.62);
+  cursor: pointer;
+}
+
+.temple-details-modal-content {
+  position: relative;
+  width: min(1440px, 100%);
+  max-height: calc(100vh - 56px);
+  overflow: auto;
+  background: #fbfaf7;
+  box-shadow: 0 24px 80px rgba(27, 21, 14, 0.32);
+}
+
 @media (max-width: 1100px) {
   .temple-map-page {
     grid-template-columns: 260px 1fr;
@@ -383,5 +424,14 @@
 
   .map-canvas {
     height: 420px;
+  }
+
+  .temple-details-modal {
+    padding: 0;
+  }
+
+  .temple-details-modal-content {
+    width: 100%;
+    max-height: 100vh;
   }
 }
