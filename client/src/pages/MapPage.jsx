@@ -56,8 +56,19 @@ const Map = () => {
     const totalStates = statesWithTemples.length;
 
     const filteredStates = useMemo(() => {
+        const search = (searchTerm || "").toLowerCase();
+
         const groupedStates = statesWithTemples.map((state) => {
-            const temples = templeData.filter((temple) => temple.state === state);
+            let temples = templeData.filter((temple) => temple.state === state);
+
+            if (search) {
+                const stateMatches = (state || "").toLowerCase().includes(search);
+                if (!stateMatches) {
+                    temples = temples.filter((t) =>
+                        (t.name || "").toLowerCase().includes(search)
+                    );
+                }
+            }
 
             return {
                 state,
@@ -68,19 +79,10 @@ const Map = () => {
         });
 
         return groupedStates.filter((item) => {
-            const search = (searchTerm || "").toLowerCase();
-
-            const stateName = item.state || "";
-            const matchesSearch =
-                stateName.toLowerCase().includes(search) ||
-                item.temples.some((temple) =>
-                    (temple.name || "").toLowerCase().includes(search)
-                );
-
             const matchesRegion =
                 activeRegion === "All" || item.region === activeRegion;
 
-            return matchesSearch && matchesRegion;
+            return item.count > 0 && matchesRegion;
         });
     }, [searchTerm, activeRegion, statesWithTemples, templeData]);
 
@@ -170,7 +172,7 @@ const Map = () => {
                                 <span className="count-badge">{item.count}</span>
                             </button>
 
-                            {selectedState === item.state &&
+                            {(selectedState === item.state || searchTerm !== "") &&
                                 item.temples.map((temple) => (
                                     <button
                                         key={temple._id || temple.name}
