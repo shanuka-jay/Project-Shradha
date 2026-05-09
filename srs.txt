@@ -1,0 +1,140 @@
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+     
+Saddha O rg Project  SRS 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+2 
+ Table of Contents  
+1. Introduction  ................................ ................................ ................................ ................................  3 
+1.1 Purpose  ................................ ................................ ................................ ................................ . 3 
+1.2 Scope  ................................ ................................ ................................ ................................ ..... 3 
+2. Overall Description  ................................ ................................ ................................ ......................  3 
+2.1 Product Perspective  ................................ ................................ ................................ ..............  3 
+2.2 User Types  ................................ ................................ ................................ .............................  4 
+3. Functional Requirements  ................................ ................................ ................................ ............  4 
+3.1 User Features  ................................ ................................ ................................ ........................  4 
+4. System Architecture  ................................ ................................ ................................ ....................  5 
+5. Non -Functional Requirements  ................................ ................................ ................................ .... 6 
+6. User Interface (UI)  ................................ ................................ ................................ .......................  6 
+8. Milestones & Timeline  ................................ ................................ ................................ ................  6 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 3 
+ 1. Introduction  
+1.1 Purpose  
+The purpose of this system is to create an interactive website that visually displays all U.S. states 
+and the temples located in each state. Users can click a state on the map to view temple details 
+for that state. The site aims to provide a visually appealing  and easy -to-use interface while 
+maintaining fast backend data access using Prisma.  
+1.2 Scope  
+The application will be web -based and accessible from desktop and mobile browsers. The key 
+features include:  
+• Map of USA  divided by states.  
+• States divided by temples  
+• Clicking a state displays a list of temples in that state.  
+• Clicking a temple shows detailed temple information.  
+• Pages: Home , About , Contact , Map . 
+• Backend uses Prisma ORM  for database management.  
+• Frontend built using React + CSS  for styling.  
+ 
+2. Overall Description  
+2.1 Product Perspective  
+The system will integrate a front -end interactive map (React) with a back -end data service 
+(Node.js + Prisma) connected to a relational database .The map will visually represent states and 
+dynamically load data from the backend.   
+➢ Display clickable U.S. map . 
+➢ Show states  with hover effects.  
+➢ Show temples in the selected state . 4 
+ ➢ Show temple details : Name, Address, History, Images.  
+➢ Simple About  and Contact  pages.  
+ 
+2.2 User Types  
+➢ General Users : Can view states and temple details.  
+3. Functional Requirements  
+3.1 User Features  
+• Homepage  
+• About Page  
+o Display organization details.  
+Images:  
+ 
+ 
+ 
+ 
+ 
+o Provide information about the purpose of the temple map.  
+• Contact Page  
+o Contact form (Name, Email, Message).  
+[Ven Manthreethenne Saddhaloka Thero,  
+5017,  16th St, NW,  
+Washington DC,  
+20011, USA.  
+ 
+USA Number.  
++12403511765  
+ 
+My E -mail :saddha.usa@gmail.com /saddhadc@gmail.com ] 
+5 
+ o Store contact form submissions  
+• Map Page  
+o Display all states in the USA.  
+o Show temple markers within each state.  
+o Clicking a state zooms in and displays its temples.  
+o Clicking a temple shows its details (name, history, location, images).  
+ 
+2. Temple Information Management  
+• View Temple Details  (User)  
+o View description, history, and location on the map.  
+ 
+3. Map Interactivity  
+• Zoom & Pan Map  
+o Allow users to zoom into states and move around the map.  
+• Filter Temples by State  
+o Show only temples in the selected state.  
+• Search Functionality  
+o Search temples by name or state.  
+ 
+4. System Architecture  
+Frontend : React (JavaScript, CSS).  
+ Backend : Node.js, Express.js, Prisma ORM.  6 
+ 5. Non -Functional Requirements  
+• Performance  
+➢  should respond to requests in less than 2 seconds.  
+• Reliability  
+➢ System should recover from minor crashes and restart services.  
+• Maintainability  
+➢ Well -structured code using modular architecture  
+• Usability  
+➢ UI should be easy to navigate for users.  
+• Scalability  
+➢ Should handle 100+ temples per state . 
+6. User Interface (UI)  
+Frontend UI Pages:   
+• Home page.  
+• About page : 
+• Contact Page  
+• Map  
+8. Milestones & Timeline  
+Tasks Date  
+UI  
+Frontend   
+Backend   7 
+  

@@ -1,5 +1,4 @@
-import React, { useMemo, useState } from "react";
-import {templeData} from "../data/temples.js";
+import React, { useMemo, useState, useEffect } from "react";
 import TempleDetails from "../components/TempleDetails.jsx";
 import {
     ComposableMap,
@@ -22,13 +21,32 @@ const Map = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [activeRegion, setActiveRegion] = useState("All");
     const [showOnlyWithTemples, setShowOnlyWithTemples] = useState(false);
+    const [templeData, setTempleData] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchTemples = async () => {
+            try {
+                // Fetch from the backend running on port 5001
+                const res = await fetch("http://localhost:5001/api/temples");
+                if (!res.ok) throw new Error("Failed to fetch temples");
+                const data = await res.json();
+                setTempleData(data);
+            } catch (err) {
+                console.error("Error fetching temples:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchTemples();
+    }, []);
 
     const templeCountByState = useMemo(() => {
         return templeData.reduce((counts, temple) => {
             counts[temple.state] = (counts[temple.state] || 0) + 1;
             return counts;
         }, {});
-    }, []);
+    }, [templeData]);
 
     const statesWithTemples = useMemo(() => {
         return Object.keys(templeCountByState);
@@ -50,12 +68,13 @@ const Map = () => {
         });
 
         return groupedStates.filter((item) => {
-            const search = searchTerm.toLowerCase();
+            const search = (searchTerm || "").toLowerCase();
 
+            const stateName = item.state || "";
             const matchesSearch =
-                item.state.toLowerCase().includes(search) ||
+                stateName.toLowerCase().includes(search) ||
                 item.temples.some((temple) =>
-                    temple.name.toLowerCase().includes(search)
+                    (temple.name || "").toLowerCase().includes(search)
                 );
 
             const matchesRegion =
@@ -63,15 +82,15 @@ const Map = () => {
 
             return matchesSearch && matchesRegion;
         });
-    }, [searchTerm, activeRegion, statesWithTemples]);
+    }, [searchTerm, activeRegion, statesWithTemples, templeData]);
 
     const filteredTemples = useMemo(() => {
         if (!selectedState) return [];
 
         return templeData.filter(
-            (temple) => temple.state.toLowerCase() === selectedState.toLowerCase()
+            (temple) => (temple.state || "").toLowerCase() === selectedState.toLowerCase()
         );
-    }, [selectedState]);
+    }, [selectedState, templeData]);
 
     const handleStateClick = (geo) => {
         const stateName = geo?.properties?.name;
@@ -97,6 +116,14 @@ const Map = () => {
         setSelectedState(null);
         setSelectedTemple(null);
     };
+
+    if (loading) {
+        return (
+            <main className="temple-map-page" style={{display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh'}}>
+                <h2>Loading temple data from backend...</h2>
+            </main>
+        );
+    }
 
     return (
         <main className="temple-map-page">
@@ -146,7 +173,7 @@ const Map = () => {
                             {selectedState === item.state &&
                                 item.temples.map((temple) => (
                                     <button
-                                        key={temple.id}
+                                        key={temple._id || temple.name}
                                         className="temple-sub-row"
                                         onClick={() => handleTempleClick(temple)}
                                     >
@@ -262,13 +289,13 @@ const Map = () => {
 
                         {templeData.map((temple) => (
                             <Marker
-                                key={temple.id}
+                                key={temple._id || temple.name}
                                 coordinates={[temple.lng, temple.lat]}
                                 onClick={() => handleTempleClick(temple)}
                             >
                                 <g
                                     className={`pin-marker ${
-                                        selectedTemple?.id === temple.id ? "active" : ""
+                                        selectedTemple?._id === temple._id ? "active" : ""
                                     }`}
                                     role="button"
                                     tabIndex="0"
