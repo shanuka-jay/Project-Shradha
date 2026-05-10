@@ -5,13 +5,19 @@ import {
     ComposableMap,
     Geographies,
     Geography,
+    Graticule,
     Marker,
+    Sphere,
 } from "react-simple-maps";
-import { geoCentroid } from "d3-geo";
+import { geoCentroid, geoDistance } from "d3-geo";
 import "../pages/MapPage.css";
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json";
-
+const worldGeoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+const globeStart = { rotate: [98, -38, 0], scale: 300 };
+const usaFocus = { rotate: [98, -39, 0], scale: 520 };
+const minGlobeScale = 250;
+const maxGlobeScale = 760;
 
 const regionOptions = ["All", "Northeast", "South", "Midwest", "West"];
 
@@ -22,6 +28,9 @@ const Map = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [activeRegion, setActiveRegion] = useState("All");
     const [showOnlyWithTemples, setShowOnlyWithTemples] = useState(false);
+    const [globeRotate, setGlobeRotate] = useState(globeStart.rotate);
+    const [globeScale, setGlobeScale] = useState(globeStart.scale);
+    const [dragStart, setDragStart] = useState(null);
 
     const templeCountByState = useMemo(() => {
         return templeData.reduce((counts, temple) => {
@@ -73,6 +82,60 @@ const Map = () => {
         );
     }, [selectedState]);
 
+    const focusGlobe = (coordinates, scale = usaFocus.scale) => {
+        const [lng, lat] = coordinates;
+
+        setGlobeRotate([-lng, -lat, 0]);
+        setGlobeScale(scale);
+    };
+
+    const zoomGlobe = (direction) => {
+        setGlobeScale((currentScale) => {
+            const nextScale = currentScale + direction * 80;
+            return Math.min(maxGlobeScale, Math.max(minGlobeScale, nextScale));
+        });
+    };
+
+    const handleGlobeWheel = (event) => {
+        event.preventDefault();
+        zoomGlobe(event.deltaY > 0 ? -1 : 1);
+    };
+
+    const handleGlobePointerDown = (event) => {
+        event.currentTarget.setPointerCapture(event.pointerId);
+        setDragStart({
+            x: event.clientX,
+            y: event.clientY,
+            rotate: globeRotate,
+        });
+    };
+
+    const handleGlobePointerMove = (event) => {
+        if (!dragStart) return;
+
+        const sensitivity = 0.45;
+        const nextLng = dragStart.rotate[0] + (event.clientX - dragStart.x) * sensitivity;
+        const nextLat = Math.max(
+            -80,
+            Math.min(80, dragStart.rotate[1] - (event.clientY - dragStart.y) * sensitivity)
+        );
+
+        setGlobeRotate([nextLng, nextLat, 0]);
+    };
+
+    const handleGlobePointerUp = (event) => {
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+            event.currentTarget.releasePointerCapture(event.pointerId);
+        }
+
+        setDragStart(null);
+    };
+
+    const isCoordinateVisible = (coordinates) => {
+        const center = [-globeRotate[0], -globeRotate[1]];
+        return geoDistance(coordinates, center) < Math.PI / 2;
+    };
+
     const handleStateClick = (geo) => {
         const stateName = geo?.properties?.name;
         if (!stateName) return;
@@ -82,15 +145,47 @@ const Map = () => {
         if (showOnlyWithTemples && count === 0) return;
 
         setSelectedState(stateName);
+        setSelectedTemple(null);
+        setViewMode("map");
 
         const firstTemple = templeData.find((temple) => temple.state === stateName);
-        setSelectedTemple(firstTemple || null);
+
+        if (firstTemple) {
+            focusGlobe([firstTemple.lng, firstTemple.lat], 650);
+        }
+    };
+
+    const handleMapStateClick = (event, geo) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setDragStart(null);
+        handleStateClick(geo);
     };
 
     const handleTempleClick = (temple) => {
         setSelectedState(temple.state);
         setSelectedTemple(temple);
+        focusGlobe([temple.lng, temple.lat], 700);
         setViewMode("details");
+    };
+
+    const handleMapTempleClick = (event, temple) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setDragStart(null);
+        handleTempleClick(temple);
+    };
+
+    const handleCountryClick = (geo) => {
+        const isUnitedStates =
+            geo?.id === "840" ||
+            geo?.id === 840 ||
+            geo?.properties?.name === "United States of America";
+
+        if (isUnitedStates) {
+            setGlobeRotate(usaFocus.rotate);
+            setGlobeScale(usaFocus.scale);
+        }
     };
 
     const clearSelection = () => {
@@ -136,7 +231,9 @@ const Map = () => {
                                 }`}
                                 onClick={() => {
                                     setSelectedState(item.state);
-                                    setSelectedTemple(item.temples[0] || null);
+                                    setSelectedTemple(null);
+                                    setViewMode("map");
+                                    focusGlobe([item.temples[0].lng, item.temples[0].lat], 650);
                                 }}
                             >
                                 <span>{item.state}</span>
@@ -167,7 +264,13 @@ const Map = () => {
                         <span className="dot"></span>
                         <div>
                             <strong>{selectedState || "Select a State"}</strong>
-                            <p>{selectedTemple ? selectedTemple.name : "Temple"}</p>
+                            <p>
+                                {selectedTemple
+                                    ? selectedTemple.name
+                                    : selectedState
+                                        ? `${filteredTemples.length} temple${filteredTemples.length === 1 ? "" : "s"}`
+                                        : "Temple"}
+                            </p>
                         </div>
                     </div>
 
@@ -187,8 +290,87 @@ const Map = () => {
                     </div>
                 </div>
 
-                <div className="map-canvas">
-                    <ComposableMap projection="geoAlbersUsa">
+                <div
+                    className="map-canvas globe-canvas"
+                    onWheel={handleGlobeWheel}
+                    onPointerDown={handleGlobePointerDown}
+                    onPointerMove={handleGlobePointerMove}
+                    onPointerUp={handleGlobePointerUp}
+                    onPointerCancel={handleGlobePointerUp}
+                >
+                    <ComposableMap
+                        projection="geoOrthographic"
+                        projectionConfig={{
+                            rotate: globeRotate,
+                            scale: globeScale,
+                            clipAngle: 90,
+                        }}
+                        width={900}
+                        height={720}
+                    >
+                        <defs>
+                            <radialGradient id="globeOcean" cx="38%" cy="32%" r="72%">
+                                <stop offset="0%" stopColor="#202020" />
+                                <stop offset="68%" stopColor="#050505" />
+                                <stop offset="100%" stopColor="#000000" />
+                            </radialGradient>
+                            <filter id="globeShadow" x="-20%" y="-20%" width="140%" height="140%">
+                                <feDropShadow dx="0" dy="22" stdDeviation="18" floodColor="#1a1209" floodOpacity="0.18" />
+                            </filter>
+                        </defs>
+
+                        <Sphere fill="url(#globeOcean)" stroke="#15100c" strokeWidth={1} filter="url(#globeShadow)" />
+                        <Graticule stroke="rgba(255,255,255,0.08)" strokeWidth={0.45} />
+
+                        <Geographies geography={worldGeoUrl}>
+                            {({ geographies }) =>
+                                geographies.map((geo, index) => {
+                                    const isUnitedStates =
+                                        geo.id === "840" ||
+                                        geo.id === 840 ||
+                                        geo.properties?.name === "United States of America";
+
+                                    return (
+                                        <Geography
+                                            key={geo.rsmKey}
+                                            geography={geo}
+                                            onClick={() => handleCountryClick(geo)}
+                                            className="country-shape"
+                                            style={{
+                                                default: {
+                                                    fill: isUnitedStates
+                                                        ? "#fff8ba"
+                                                        : index % 5 === 0
+                                                            ? "#4ec967"
+                                                            : index % 5 === 1
+                                                                ? "#f057ad"
+                                                                : index % 5 === 2
+                                                                    ? "#35bdda"
+                                                                    : index % 5 === 3
+                                                                        ? "#ffd037"
+                                                                        : "#ff7d64",
+                                                    stroke: "#050505",
+                                                    strokeWidth: 0.7,
+                                                    outline: "none",
+                                                    cursor: isUnitedStates ? "pointer" : "grab",
+                                                },
+                                                hover: {
+                                                    fill: isUnitedStates ? "#fff5a0" : "#f7d36b",
+                                                    stroke: "#050505",
+                                                    strokeWidth: 0.8,
+                                                    outline: "none",
+                                                },
+                                                pressed: {
+                                                    fill: "#d8b24f",
+                                                    outline: "none",
+                                                },
+                                            }}
+                                        />
+                                    );
+                                })
+                            }
+                        </Geographies>
+
                         <Geographies geography={geoUrl}>
                             {({ geographies }) =>
                                 geographies.map((geo) => {
@@ -202,17 +384,29 @@ const Map = () => {
                                         <g key={geo.rsmKey}>
                                             <Geography
                                                 geography={geo}
-                                                onClick={() => handleStateClick(geo)}
-                                                className="state-shape"
+                                                role="button"
+                                                aria-label={`Select ${stateName}`}
+                                                onPointerDown={(event) => {
+                                                    event.stopPropagation();
+                                                }}
+                                                onClick={(event) => handleMapStateClick(event, geo)}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Enter" || event.key === " ") {
+                                                        event.preventDefault();
+                                                        event.stopPropagation();
+                                                        handleStateClick(geo);
+                                                    }
+                                                }}
+                                                className="state-shape globe-state-shape"
                                                 style={{
                                                     default: {
                                                         fill: isSelected
-                                                            ? "#c9a447"
+                                                            ? "#d5a742"
                                                             : hasTemples
-                                                                ? "#eee5d3"
-                                                                : "#f7f4ee",
-                                                        stroke: "#ffffff",
-                                                        strokeWidth: 0.8,
+                                                                ? "#f8edbb"
+                                                                : "rgba(255, 247, 206, 0.56)",
+                                                        stroke: "#1d130a",
+                                                        strokeWidth: 0.45,
                                                         outline: "none",
                                                         cursor:
                                                             showOnlyWithTemples && !hasTemples
@@ -222,7 +416,7 @@ const Map = () => {
                                                             showOnlyWithTemples && !hasTemples ? 0.35 : 1,
                                                     },
                                                     hover: {
-                                                        fill: hasTemples ? "#d6b764" : "#e8e1d2",
+                                                        fill: hasTemples ? "#d8af4e" : "#f5e4a8",
                                                         outline: "none",
                                                         cursor: "pointer",
                                                     },
@@ -233,27 +427,6 @@ const Map = () => {
                                                 }}
                                             />
 
-                                            {templeCount > 0 && (
-                                                <Marker coordinates={centroid}>
-                                                    <circle
-                                                        r={12}
-                                                        fill="#c19a3b"
-                                                        stroke="#ffffff"
-                                                        strokeWidth={2}
-                                                        pointerEvents="none"
-                                                    />
-                                                    <text
-                                                        textAnchor="middle"
-                                                        y={4}
-                                                        fontSize={10}
-                                                        fontWeight="700"
-                                                        fill="#ffffff"
-                                                        pointerEvents="none"
-                                                    >
-                                                        {templeCount}
-                                                    </text>
-                                                </Marker>
-                                            )}
                                         </g>
                                     );
                                 })
@@ -261,101 +434,247 @@ const Map = () => {
                         </Geographies>
 
                         {templeData.map((temple) => (
-                            <Marker
-                                key={temple.id}
-                                coordinates={[temple.lng, temple.lat]}
-                                onClick={() => handleTempleClick(temple)}
-                            >
-                                <g
-                                    className={`pin-marker ${
-                                        selectedTemple?.id === temple.id ? "active" : ""
-                                    }`}
-                                    role="button"
-                                    tabIndex="0"
-                                    aria-label={`View details for ${temple.name}`}
-                                    onKeyDown={(event) => {
-                                        if (event.key === "Enter" || event.key === " ") {
-                                            event.preventDefault();
-                                            handleTempleClick(temple);
-                                        }
-                                    }}
+                            isCoordinateVisible([temple.lng, temple.lat]) && (
+                                <Marker
+                                    key={temple.id}
+                                    coordinates={[temple.lng, temple.lat]}
                                 >
-                                    <circle r={6} fill="#b91c1c" stroke="#ffffff" strokeWidth={2} />
-                                </g>
-                            </Marker>
+                                    <g
+                                        className={`pin-marker ${
+                                            selectedTemple?.id === temple.id ? "active" : ""
+                                        }`}
+                                        role="button"
+                                        tabIndex="0"
+                                        aria-label={`View details for ${temple.name}`}
+                                        onPointerDown={(event) => {
+                                            event.stopPropagation();
+                                        }}
+                                        onClick={(event) => handleMapTempleClick(event, temple)}
+                                        onKeyDown={(event) => {
+                                            if (event.key === "Enter" || event.key === " ") {
+                                                event.preventDefault();
+                                                event.stopPropagation();
+                                                handleTempleClick(temple);
+                                            }
+                                        }}
+                                    >
+                                        <circle
+                                            r={19}
+                                            cy={-5}
+                                            fill="transparent"
+                                            onPointerDown={(event) => {
+                                                event.stopPropagation();
+                                            }}
+                                            onClick={(event) => handleMapTempleClick(event, temple)}
+                                        />
+                                        <path
+                                            d="M0,-20 C9,-20 16,-13 16,-4 C16,8 0,22 0,22 C0,22 -16,8 -16,-4 C-16,-13 -9,-20 0,-20 Z"
+                                            fill="#cf1f1f"
+                                            stroke="#ffffff"
+                                            strokeWidth={2}
+                                            onPointerDown={(event) => {
+                                                event.stopPropagation();
+                                            }}
+                                            onClick={(event) => handleMapTempleClick(event, temple)}
+                                        />
+                                        <circle
+                                            r={5}
+                                            cy={-4}
+                                            fill="#fff8dc"
+                                            onPointerDown={(event) => {
+                                                event.stopPropagation();
+                                            }}
+                                            onClick={(event) => handleMapTempleClick(event, temple)}
+                                        />
+                                    </g>
+                                </Marker>
+                            )
                         ))}
+
+                        <Geographies geography={geoUrl}>
+                            {({ geographies }) =>
+                                geographies.map((geo) => {
+                                    const stateName = geo.properties.name;
+                                    const templeCount = templeCountByState[stateName] || 0;
+                                    const centroid = geoCentroid(geo);
+
+                                    if (templeCount === 0 || !isCoordinateVisible(centroid)) {
+                                        return null;
+                                    }
+
+                                    return (
+                                        <Marker key={`${geo.rsmKey}-count`} coordinates={centroid}>
+                                            <g
+                                                className="state-count-marker"
+                                                role="button"
+                                                tabIndex="0"
+                                                aria-label={`View temples in ${stateName}`}
+                                                onPointerDown={(event) => {
+                                                    event.stopPropagation();
+                                                }}
+                                                onClick={(event) => handleMapStateClick(event, geo)}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === "Enter" || event.key === " ") {
+                                                        event.preventDefault();
+                                                        event.stopPropagation();
+                                                        handleStateClick(geo);
+                                                    }
+                                                }}
+                                            >
+                                                <circle
+                                                    r={12}
+                                                    cy={-26}
+                                                    fill="#c19a3b"
+                                                    stroke="#ffffff"
+                                                    strokeWidth={2}
+                                                />
+                                                <text
+                                                    textAnchor="middle"
+                                                    y={-22}
+                                                    fontSize={10}
+                                                    fontWeight="700"
+                                                    fill="#ffffff"
+                                                >
+                                                    {templeCount}
+                                                </text>
+                                            </g>
+                                        </Marker>
+                                    );
+                                })
+                            }
+                        </Geographies>
                     </ComposableMap>
+
+                    <div
+                        className="globe-zoom-controls"
+                        aria-label="Map zoom controls"
+                        onPointerDown={(event) => event.stopPropagation()}
+                    >
+                        <button type="button" onClick={() => zoomGlobe(1)} aria-label="Zoom in">
+                            +
+                        </button>
+                        <button type="button" onClick={() => zoomGlobe(-1)} aria-label="Zoom out">
+                            -
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setGlobeRotate(globeStart.rotate);
+                                setGlobeScale(globeStart.scale);
+                            }}
+                            aria-label="Reset globe"
+                        >
+                            ⌂
+                        </button>
+                    </div>
                 </div>
             </section>
 
-            <aside className={`details-panel ${selectedTemple ? "open" : ""}`}>
-                {selectedTemple ? (
+            <aside className={`details-panel ${selectedState ? "open" : ""}`}>
+                {selectedState ? (
                     <>
                         <button className="close-btn" onClick={clearSelection}>
                             ×
                         </button>
 
-                        <img
-                            src={selectedTemple.imageUrl}
-                            alt={selectedTemple.name}
-                            className="details-image"
-                        />
+                        <div className="state-temple-panel">
+                            <p className="state-label">{selectedState}</p>
+                            <h2>Temples in {selectedState}</h2>
 
-                        <div className="details-content">
-                            <p className="state-label">{selectedTemple.state}</p>
-                            <h2>{selectedTemple.name}</h2>
-
-                            <div className="info-card">
-                                <span>⌖</span>
-                                <div>
-                                    <small>Address</small>
-                                    <p>{selectedTemple.address}</p>
+                            {filteredTemples.length > 0 ? (
+                                <div className="right-temple-list">
+                                    {filteredTemples.map((temple) => (
+                                        <button
+                                            key={temple.id}
+                                            className={`right-temple-row ${
+                                                selectedTemple?.id === temple.id ? "active" : ""
+                                            }`}
+                                            onClick={() => handleTempleClick(temple)}
+                                        >
+                                            <span className="dot"></span>
+                                            <span>
+                                                <strong>{temple.name}</strong>
+                                                <small>{temple.address}</small>
+                                            </span>
+                                        </button>
+                                    ))}
                                 </div>
-                            </div>
-
-                            <div className="info-card">
-                                <span>♙</span>
-                                <div>
-                                    <small>Chief Monk / Guardian</small>
-                                    <p>{selectedTemple.chiefMonk}</p>
-                                </div>
-                            </div>
-
-                            <div className="info-card">
-                                <span>☎</span>
-                                <div>
-                                    <small>Contact</small>
-                                    <p>{selectedTemple.contact}</p>
-                                </div>
-                            </div>
-
-                            <div className="info-card">
-                                <span>✉</span>
-                                <div>
-                                    <small>Email</small>
-                                    <p>{selectedTemple.email}</p>
-                                </div>
-                            </div>
-
-                            <div className="history-box">
-                                <small>History & Background</small>
-                                <p>{selectedTemple.history}</p>
-                            </div>
-
-                            <div className="details-actions">
-                                <a
-                                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                                        selectedTemple.address
-                                    )}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                >
-                                    Get Directions
-                                </a>
-
-                                <button onClick={() => setViewMode("details")}>View Details</button>
-                            </div>
+                            ) : (
+                                <p className="no-state-temples">
+                                    No temples are listed for this state yet.
+                                </p>
+                            )}
                         </div>
+
+                        {selectedTemple ? (
+                            <>
+                                <img
+                                    src={selectedTemple.imageUrl}
+                                    alt={selectedTemple.name}
+                                    className="details-image"
+                                />
+
+                                <div className="details-content">
+                                    <p className="state-label">{selectedTemple.state}</p>
+                                    <h2>{selectedTemple.name}</h2>
+
+                                    <div className="info-card">
+                                        <span>⌖</span>
+                                        <div>
+                                            <small>Address</small>
+                                            <p>{selectedTemple.address}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="info-card">
+                                        <span>♙</span>
+                                        <div>
+                                            <small>Chief Monk / Guardian</small>
+                                            <p>{selectedTemple.chiefMonk}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="info-card">
+                                        <span>☎</span>
+                                        <div>
+                                            <small>Contact</small>
+                                            <p>{selectedTemple.contact}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="info-card">
+                                        <span>✉</span>
+                                        <div>
+                                            <small>Email</small>
+                                            <p>{selectedTemple.email}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="history-box">
+                                        <small>History & Background</small>
+                                        <p>{selectedTemple.history}</p>
+                                    </div>
+
+                                    <div className="details-actions">
+                                        <a
+                                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                                                selectedTemple.address
+                                            )}`}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                        >
+                                            Get Directions
+                                        </a>
+
+                                        <button onClick={() => setViewMode("details")}>View Details</button>
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="state-details-prompt">
+                                <p>Select a temple from the map or this list to view its details.</p>
+                            </div>
+                        )}
                     </>
                 ) : (
                     <div className="empty-details">
