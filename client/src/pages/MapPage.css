@@ -213,23 +213,89 @@
   padding: 20px;
 }
 
+.globe-canvas {
+  position: relative;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.globe-canvas:active {
+  cursor: grabbing;
+}
+
 .map-canvas svg {
   width: 100%;
   height: 100%;
 }
 
+.country-shape,
+.globe-state-shape {
+  transition: fill 180ms ease, opacity 180ms ease, stroke-width 180ms ease;
+}
+
 .pin-marker {
+  cursor: pointer;
+  filter: drop-shadow(0 8px 8px rgba(22, 12, 7, 0.28));
+}
+
+.state-count-marker {
   cursor: pointer;
 }
 
-.pin-marker circle {
-  transition: r 160ms ease, fill 160ms ease;
+.state-count-marker circle,
+.state-count-marker text {
+  pointer-events: auto;
 }
 
-.pin-marker:hover circle,
-.pin-marker.active circle {
-  r: 9;
+.state-count-marker:hover circle {
+  fill: #d8af4e;
+}
+
+.pin-marker path,
+.pin-marker circle {
+  transition: transform 160ms ease, fill 160ms ease;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.pin-marker:hover path,
+.pin-marker.active path {
+  transform: scale(1.14);
   fill: #c19a3b;
+}
+
+.globe-zoom-controls {
+  position: absolute;
+  right: 28px;
+  bottom: 28px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e0d7c7;
+  background: #fffdfa;
+  box-shadow: 0 8px 22px rgba(42, 33, 24, 0.12);
+}
+
+.globe-zoom-controls button {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-bottom: 1px solid #e6dece;
+  background: transparent;
+  color: #5b4d3c;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.globe-zoom-controls button:last-child {
+  border-bottom: 0;
+  font-size: 14px;
+}
+
+.globe-zoom-controls button:hover {
+  background: #f4ecdc;
+  color: #2a2118;
 }
 
 .details-panel {
@@ -237,6 +303,70 @@
   border-left: 1px solid #e6dece;
   position: relative;
   overflow-y: auto;
+}
+
+.state-temple-panel {
+  padding: 26px 52px 20px 22px;
+  border-bottom: 1px solid #e6dece;
+  background: #fbfaf7;
+}
+
+.state-temple-panel h2 {
+  font-size: 22px;
+  font-weight: 500;
+  margin: 8px 0 18px;
+}
+
+.right-temple-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.right-temple-row {
+  width: 100%;
+  border: 1px solid #e1d7c8;
+  background: #fff;
+  color: #2a2118;
+  display: grid;
+  grid-template-columns: 9px 1fr;
+  align-items: start;
+  gap: 10px;
+  padding: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.right-temple-row strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.right-temple-row small {
+  display: block;
+  margin-top: 4px;
+  color: #756854;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.right-temple-row:hover,
+.right-temple-row.active {
+  border-color: #c19a3b;
+  background: #f4ecdc;
+}
+
+.no-state-temples,
+.state-details-prompt {
+  color: #6b5d4a;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.state-details-prompt {
+  padding: 22px;
 }
 
 .close-btn {
