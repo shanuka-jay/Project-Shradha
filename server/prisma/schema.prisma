@@ -11,16 +11,69 @@ datasource db {
 }
 
 model Temple {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  state     String
-  address   String?
-  history   String?
-  images    String[]
-  lat       Float?
-  lng       Float?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  state          String
+  address        String?
+  chiefMonk      String?
+  phone          String?
+  email          String?
+  // Content sections - updated separately
+  overview       String?
+  history        String?
+  // Images - each managed separately
+  mainImage      String?
+  chiefMonkImage String?
+  galleryImages  String[]
+  // Legacy images array (backwards compat)
+  images         String[]
+  // Services stored as JSON strings: {"name":"Sunday Dhamma","icon":"sun","time":"9:00 AM"}
+  services       String[]
+  lat            Float?
+  lng            Float?
+  status         String   @default("published")
+  mapVisible     Boolean  @default(true)
+  regionTag      String?
+  monks          Monk[]
+  events         Event[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Monk {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  legalName      String
+  displayName    String?
+  ordinationDate String?
+  nationality    String?
+  residence      String?
+  languages      String[]
+  biography      String?
+  role           String?
+  profilePhoto   String?
+  socialLinks    Json?
+  contactInfo    String?
+  linkedTempleId String?  @db.ObjectId
+  temple         Temple?  @relation(fields: [linkedTempleId], references: [id])
+  status         String   @default("published")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Event {
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  title            String
+  dateTime         DateTime
+  endDateTime      DateTime?
+  eventType        String
+  description      String?
+  linkedTempleId   String?   @db.ObjectId
+  temple           Temple?   @relation(fields: [linkedTempleId], references: [id])
+  recurring        Boolean   @default(false)
+  recurringPattern String?
+  status           String    @default("published")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }
 
 model Contact {
@@ -31,5 +84,24 @@ model Contact {
   templeName String?
   purpose    String?
   message    String
+  read       Boolean  @default(false)
+  archived   Boolean  @default(false)
   createdAt  DateTime @default(now())
+}
+
+model Admin {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("editor")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model SiteSettings {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
 }
