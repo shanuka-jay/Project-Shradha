@@ -1,167 +1,400 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import './Temples.css'
+import './Settings.css'
 
-const US_STATES = ['Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming','DC']
+export default function Settings() {
+  const { admin, token } = useAuth()
 
-export default function Temples() {
-  const { token } = useAuth()
-  const [temples, setTemples] = useState([])
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [page, setPage] = useState(1)
-  const [search, setSearch] = useState('')
-  const [filterState, setFilterState] = useState('')
-  const [filterStatus, setFilterStatus] = useState('')
-  const [deleting, setDeleting] = useState(null)
-  const [toggling, setToggling] = useState(null)
-  const limit = 15
+  /* ── Change Password ── */
+  const [pwForm, setPwForm]       = useState({ currentPassword: '', newPassword: '', confirm: '' })
+  const [pwLoading, setPwLoading] = useState(false)
+  const [pwError, setPwError]     = useState('')
+  const [pwSuccess, setPwSuccess] = useState('')
 
-  async function fetchTemples() {
-    setLoading(true)
-    const params = new URLSearchParams({ page, limit })
-    if (search)       params.set('search', search)
-    if (filterState)  params.set('state', filterState)
-    if (filterStatus) params.set('status', filterStatus)
-    try {
-      const res = await fetch(`/api/admin/temples?${params}`, { headers: { Authorization: `Bearer ${token}` } })
-      const data = await res.json()
-      setTemples(data.temples || [])
-      setTotal(data.total || 0)
-    } catch { }
-    finally { setLoading(false) }
-  }
+  /* ── User list ── */
+  const [users, setUsers]               = useState([])
+  const [usersLoading, setUsersLoading] = useState(false)
 
-  useEffect(() => { fetchTemples() }, [page, filterState, filterStatus])
+  /* ── Add new user ── */
+  const [newUser, setNewUser]                 = useState({ name: '', email: '', password: '', role: 'editor' })
+  const [newUserLoading, setNewUserLoading]   = useState(false)
+  const [newUserError, setNewUserError]       = useState('')
+  const [newUserSuccess, setNewUserSuccess]   = useState('')
+
+  /* ── Edit user ── */
+  const [editingUser, setEditingUser] = useState(null)
+  const [editLoading, setEditLoading] = useState(false)
+  const [editError, setEditError]     = useState('')
+
+  /* ── Fetch users on mount ── */
   useEffect(() => {
-    const t = setTimeout(() => fetchTemples(), 350)
-    return () => clearTimeout(t)
-  }, [search])
+    setUsersLoading(true)
+    fetch('/api/admin/settings/users', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => { setUsers(Array.isArray(d) ? d : []); setUsersLoading(false) })
+      .catch(() => setUsersLoading(false))
+  }, [token])
 
-  async function handleDelete(id, name) {
-    if (!window.confirm(`Delete "${name}"? This cannot be undone.`)) return
-    setDeleting(id)
-    try {
-      await fetch(`/api/admin/temples/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
-      fetchTemples()
-    } catch { }
-    finally { setDeleting(null) }
+  /* ── Handlers ── */
+  function handlePwChange(e) {
+    setPwForm(f => ({ ...f, [e.target.name]: e.target.value }))
+    setPwError(''); setPwSuccess('')
   }
 
-  async function togglePublish(t) {
-    const newStatus = t.status === 'published' ? 'draft' : 'published'
-    setToggling(t.id)
+  async function handlePwSubmit(e) {
+    e.preventDefault()
+    if (pwForm.newPassword !== pwForm.confirm) { setPwError('Passwords do not match.'); return }
+    if (pwForm.newPassword.length < 8)         { setPwError('Must be at least 8 characters.'); return }
+    setPwLoading(true)
     try {
-      await fetch(`/api/admin/temples/${t.id}`, {
+      const res  = await fetch('/api/admin/change-password', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ ...t, status: newStatus, services: t.services || [], images: t.images || [] }),
+        body: JSON.stringify({ currentPassword: pwForm.currentPassword, newPassword: pwForm.newPassword }),
       })
-      setTemples(ts => ts.map(x => x.id === t.id ? { ...x, status: newStatus } : x))
-    } catch { }
-    finally { setToggling(null) }
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed')
+      setPwSuccess('Password updated successfully.')
+      setPwForm({ currentPassword: '', newPassword: '', confirm: '' })
+    } catch (err) { setPwError(err.message) }
+    finally { setPwLoading(false) }
   }
 
-  const totalPages = Math.ceil(total / limit)
+  async function handleCreateUser(e) {
+    e.preventDefault()
+    setNewUserError(''); setNewUserSuccess('')
+    setNewUserLoading(true)
+    try {
+      const res  = await fetch('/api/admin/settings/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(newUser),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed')
+      setUsers(u => [...u, data])
+      setNewUser({ name: '', email: '', password: '', role: 'editor' })
+      setNewUserSuccess('User created successfully.')
+      setTimeout(() => setNewUserSuccess(''), 3000)
+    } catch (err) { setNewUserError(err.message) }
+    finally { setNewUserLoading(false) }
+  }
+
+  async function handleDeleteUser(id) {
+    if (!window.confirm('Delete this user? This cannot be undone.')) return
+    await fetch(`/api/admin/settings/users/${id}`, {
+      method: 'DELETE', headers: { Authorization: `Bearer ${token}` },
+    })
+    setUsers(u => u.filter(x => x.id !== id))
+    if (editingUser?.id === id) setEditingUser(null)
+  }
+
+  async function handleRoleChange(id, role) {
+    await fetch(`/api/admin/settings/users/${id}/role`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ role }),
+    })
+    setUsers(u => u.map(x => x.id === id ? { ...x, role } : x))
+  }
+
+  function startEdit(u) {
+    setEditingUser({ id: u.id, name: u.name, email: u.email, password: '' })
+    setEditError('')
+  }
+
+  async function handleEditSave(e) {
+    e.preventDefault()
+    setEditError('')
+    if (editingUser.password && editingUser.password.length < 8) {
+      setEditError('Password must be at least 8 characters.')
+      return
+    }
+    setEditLoading(true)
+    try {
+      const body = { name: editingUser.name, email: editingUser.email }
+      if (editingUser.password) body.password = editingUser.password
+      const res  = await fetch(`/api/admin/settings/users/${editingUser.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to update user')
+      setUsers(u => u.map(x => x.id === editingUser.id ? { ...x, name: data.name, email: data.email } : x))
+      setEditingUser(null)
+    } catch (err) { setEditError(err.message) }
+    finally { setEditLoading(false) }
+  }
+
+  /* ── Shared styles ── */
+  const inputS = {
+    width: '100%', padding: '0.55rem 0.75rem',
+    border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
+    background: 'var(--surface)', color: 'var(--text)', fontSize: '0.875rem',
+    boxSizing: 'border-box',
+  }
+  const labelS = { display: 'block', fontSize: '0.8rem', fontWeight: 500, color: 'var(--text-2)', marginBottom: '0.35rem' }
+  const groupS = { marginBottom: '1rem' }
 
   return (
-    <div className="temples-page">
+    <div className="settings-page">
       <div className="page-header">
-        <div>
-          <h1 className="page-title">Temples</h1>
-          <p className="page-desc">{total} temple{total !== 1 ? 's' : ''} in the directory</p>
-        </div>
-        <Link to="/temples/new" className="btn-primary-action">＋ Add New Temple</Link>
+        <h1 className="page-title">Settings</h1>
+        <p className="page-desc">Manage admin accounts and user permissions.</p>
       </div>
 
-      <div className="filter-bar">
-        <input type="search" className="filter-input" placeholder="Search temples…"
-          value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} />
-        <select className="filter-select" value={filterState} onChange={e => { setFilterState(e.target.value); setPage(1) }}>
-          <option value="">All States</option>
-          {US_STATES.map(s => <option key={s}>{s}</option>)}
-        </select>
-        <select className="filter-select" value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1) }}>
-          <option value="">All Status</option>
-          <option value="published">Published</option>
-          <option value="draft">Draft</option>
-          <option value="pending">Pending</option>
-        </select>
-      </div>
+      <div className="settings-grid">
 
-      <div className="temples-table-wrap">
-        {loading ? (
-          <div className="table-loading">Loading temples…</div>
-        ) : temples.length === 0 ? (
-          <div className="table-empty">
-            <i className="fas fa-place-of-worship" style={{ fontSize:'2.5rem', marginBottom:'0.75rem' }}></i>
-            <p>No temples found.</p>
-            <Link to="/temples/new" className="btn-primary-action" style={{ marginTop:'1rem', display:'inline-flex' }}>Add first temple</Link>
+        {/* ── Account Information ── */}
+        <div className="settings-card">
+          <h2 className="settings-card-title">Account Information</h2>
+          <div className="settings-profile">
+            <div className="settings-avatar">{(admin?.name || 'A').charAt(0).toUpperCase()}</div>
+            <div className="settings-profile-info">
+              <div className="settings-profile-name">{admin?.name}</div>
+              <div className="settings-profile-email">{admin?.email}</div>
+              <span className={`badge badge-${admin?.role === 'superadmin' ? 'published' : 'draft'}`}>
+                {admin?.role === 'superadmin' ? '★ Super Admin' : 'Editor'}
+              </span>
+            </div>
           </div>
-        ) : (
-          <table className="temples-table">
-            <thead>
-              <tr>
-                <th>Temple</th>
-                <th>State</th>
-                <th>Chief Monk</th>
-                <th>Status</th>
-                <th>Map</th>
-                <th>Added</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {temples.map(t => (
-                <tr key={t.id}>
-                  <td>
-                    <div className="td-temple-name">{t.name}</div>
-                    {t.address && <div className="td-temple-addr">{t.address}</div>}
-                  </td>
-                  <td style={{ color:'var(--text-2)', fontSize:'0.85rem' }}>{t.state}</td>
-                  <td style={{ color:'var(--text-2)', fontSize:'0.85rem' }}>{t.chiefMonk || <span style={{ color:'var(--muted)' }}>—</span>}</td>
-                  <td>
-                    <button
-                      onClick={() => togglePublish(t)}
-                      disabled={toggling === t.id}
-                      className={`badge badge-${t.status || 'published'}`}
-                      style={{ border:'none', cursor:'pointer', transition:'opacity 0.15s' }}
-                      title="Click to toggle publish/draft"
-                    >
-                      {toggling === t.id ? '…' : (t.status || 'published')}
-                    </button>
-                  </td>
-                  <td style={{ textAlign:'center' }}>
-                    {t.lat && t.lng
-                      ? <i className="fas fa-map-marker-alt" title={`${t.lat.toFixed(4)}, ${t.lng.toFixed(4)}`} style={{ color:'#16a34a', fontSize:'1rem' }}></i>
-                      : <i className="fas fa-exclamation-triangle" title="No coordinates" style={{ color:'#dc2626', fontSize:'0.8rem' }}></i>}
-                  </td>
-                  <td className="td-date">{new Date(t.createdAt).toLocaleDateString('en-US', { month:'short', day:'2-digit', year:'numeric' })}</td>
-                  <td>
-                    <div className="td-actions">
-                      <Link to={`/temples/${t.id}/edit`} className="action-btn action-edit" title="Edit"><i className="fas fa-edit"></i></Link>
-                      <button
-                        className="action-btn action-delete" title="Delete"
-                        disabled={deleting === t.id}
-                        onClick={() => handleDelete(t.id, t.name)}
-                      >{deleting === t.id ? '…' : <i className="fas fa-times"></i>}</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-
-      {totalPages > 1 && (
-        <div className="pagination">
-          <button onClick={() => setPage(p => Math.max(1,p-1))} disabled={page===1} className="page-btn">← Prev</button>
-          <span className="page-info">Page {page} of {totalPages} · {total} total</span>
-          <button onClick={() => setPage(p => Math.min(totalPages,p+1))} disabled={page===totalPages} className="page-btn">Next →</button>
+          <div className="settings-info-grid">
+            <div className="settings-info-row">
+              <span className="settings-info-label">Email</span>
+              <span className="settings-info-value">{admin?.email}</span>
+            </div>
+            <div className="settings-info-row">
+              <span className="settings-info-label">Role</span>
+              <span className="settings-info-value">{admin?.role}</span>
+            </div>
+            <div className="settings-info-row">
+              <span className="settings-info-label">Admin ID</span>
+              <span className="settings-info-value settings-id">{admin?.id}</span>
+            </div>
+          </div>
         </div>
-      )}
+
+        {/* ── Change Password ── */}
+        <div className="settings-card">
+          <h2 className="settings-card-title">Change Password</h2>
+          {pwError   && <div className="form-alert form-alert-error">⚠ {pwError}</div>}
+          {pwSuccess && <div className="form-alert form-alert-success">✓ {pwSuccess}</div>}
+          <form onSubmit={handlePwSubmit}>
+            <div style={groupS}>
+              <label style={labelS}>Current Password</label>
+              <input style={inputS} type="password" name="currentPassword" value={pwForm.currentPassword} onChange={handlePwChange} required />
+            </div>
+            <div style={groupS}>
+              <label style={labelS}>New Password</label>
+              <input style={inputS} type="password" name="newPassword" value={pwForm.newPassword} onChange={handlePwChange} placeholder="Min 8 characters" required />
+            </div>
+            <div style={groupS}>
+              <label style={labelS}>Confirm New Password</label>
+              <input style={inputS} type="password" name="confirm" value={pwForm.confirm} onChange={handlePwChange} required />
+            </div>
+            <button type="submit" className="btn-save" disabled={pwLoading}>
+              {pwLoading ? 'Updating…' : '✓ Update Password'}
+            </button>
+          </form>
+        </div>
+
+        {/* ── Admin Users & Permissions ── */}
+        <div className="settings-card settings-card-wide">
+          <h2 className="settings-card-title">Admin Users &amp; Permissions</h2>
+
+          {usersLoading ? (
+            <div style={{ color: 'var(--text-2)', fontSize: '0.875rem', padding: '1rem 0' }}>Loading users…</div>
+          ) : (
+            <div style={{ overflowX: 'auto', marginBottom: '2rem' }}>
+              <table className="temples-table" style={{ fontSize: '0.85rem', width: '100%' }}>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Joined</th>
+                    <th style={{ minWidth: '130px' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.length === 0 && (
+                    <tr>
+                      <td colSpan={5} style={{ color: 'var(--text-3)', textAlign: 'center', padding: '1.5rem' }}>
+                        No users found.
+                      </td>
+                    </tr>
+                  )}
+                  {users.map(u => (
+                    <>
+                      <tr key={u.id} style={{ background: editingUser?.id === u.id ? 'var(--surface-2, #f0f4ff)' : undefined }}>
+                        <td style={{ fontWeight: 500 }}>{u.name}</td>
+                        <td style={{ color: 'var(--text-2)' }}>{u.email}</td>
+                        <td>
+                          {u.id === admin?.id ? (
+                            <span className={`badge badge-${u.role === 'superadmin' ? 'published' : 'draft'}`}>{u.role}</span>
+                          ) : (
+                            <select
+                              value={u.role}
+                              onChange={e => handleRoleChange(u.id, e.target.value)}
+                              style={{ padding: '0.25rem 0.5rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: '0.82rem', background: 'var(--surface)' }}
+                            >
+                              <option value="editor">editor</option>
+                              <option value="superadmin">superadmin</option>
+                            </select>
+                          )}
+                        </td>
+                        <td style={{ color: 'var(--text-3)', whiteSpace: 'nowrap' }}>
+                          {u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : '—'}
+                        </td>
+                        <td>
+                          {u.id === admin?.id ? (
+                            <span style={{ color: 'var(--text-3)', fontSize: '0.78rem' }}>You</span>
+                          ) : (
+                            <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                              <button
+                                onClick={() => editingUser?.id === u.id ? setEditingUser(null) : startEdit(u)}
+                                style={{ color: editingUser?.id === u.id ? 'var(--text-2)' : '#2563eb', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 500, padding: 0 }}
+                              >
+                                {editingUser?.id === u.id ? 'Cancel' : '✏ Edit'}
+                              </button>
+                              <span style={{ color: 'var(--border)' }}>|</span>
+                              <button
+                                onClick={() => handleDeleteUser(u.id)}
+                                style={{ color: '#b91c1c', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 500, padding: 0 }}
+                              >
+                                🗑 Delete
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+
+                      {/* Inline edit row */}
+                      {editingUser?.id === u.id && (
+                        <tr key={`edit-${u.id}`}>
+                          <td colSpan={5} style={{ background: 'var(--surface-2, #f0f4ff)', padding: '1rem 1.25rem', borderTop: '2px solid #2563eb33' }}>
+                            <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.75rem', color: 'var(--text)' }}>
+                              Editing — {u.name}
+                            </div>
+                            {editError && (
+                              <div className="form-alert form-alert-error" style={{ marginBottom: '0.75rem' }}>⚠ {editError}</div>
+                            )}
+                            <form onSubmit={handleEditSave}>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr) auto', gap: '0.75rem', alignItems: 'end' }}>
+                                <div style={groupS}>
+                                  <label style={labelS}>Full Name</label>
+                                  <input
+                                    style={inputS}
+                                    value={editingUser.name}
+                                    onChange={e => setEditingUser(ev => ({ ...ev, name: e.target.value }))}
+                                    required
+                                  />
+                                </div>
+                                <div style={groupS}>
+                                  <label style={labelS}>Email</label>
+                                  <input
+                                    style={inputS}
+                                    type="email"
+                                    value={editingUser.email}
+                                    onChange={e => setEditingUser(ev => ({ ...ev, email: e.target.value }))}
+                                    required
+                                  />
+                                </div>
+                                <div style={groupS}>
+                                  <label style={labelS}>
+                                    New Password&nbsp;
+                                    <span style={{ fontWeight: 400, color: 'var(--text-3)' }}>(leave blank to keep)</span>
+                                  </label>
+                                  <input
+                                    style={inputS}
+                                    type="password"
+                                    value={editingUser.password}
+                                    onChange={e => setEditingUser(ev => ({ ...ev, password: e.target.value }))}
+                                    placeholder="Min 8 chars"
+                                  />
+                                </div>
+                                <button
+                                  type="submit"
+                                  className="btn-save"
+                                  style={{ marginBottom: '1rem', whiteSpace: 'nowrap' }}
+                                  disabled={editLoading}
+                                >
+                                  {editLoading ? 'Saving…' : '✓ Save Changes'}
+                                </button>
+                              </div>
+                            </form>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Add New User */}
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', marginBottom: '1rem', color: 'var(--text)' }}>
+              Add New Admin User
+            </h3>
+            {newUserError   && <div className="form-alert form-alert-error"   style={{ marginBottom: '0.75rem' }}>⚠ {newUserError}</div>}
+            {newUserSuccess && <div className="form-alert form-alert-success" style={{ marginBottom: '0.75rem' }}>✓ {newUserSuccess}</div>}
+            <form onSubmit={handleCreateUser}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', alignItems: 'end' }}>
+                <div style={groupS}>
+                  <label style={labelS}>Full Name</label>
+                  <input
+                    style={inputS}
+                    value={newUser.name}
+                    onChange={e => setNewUser(u => ({ ...u, name: e.target.value }))}
+                    placeholder="Jane Doe"
+                    required
+                  />
+                </div>
+                <div style={groupS}>
+                  <label style={labelS}>Email</label>
+                  <input
+                    style={inputS}
+                    type="email"
+                    value={newUser.email}
+                    onChange={e => setNewUser(u => ({ ...u, email: e.target.value }))}
+                    placeholder="jane@example.com"
+                    required
+                  />
+                </div>
+                <div style={groupS}>
+                  <label style={labelS}>Password</label>
+                  <input
+                    style={inputS}
+                    type="password"
+                    value={newUser.password}
+                    onChange={e => setNewUser(u => ({ ...u, password: e.target.value }))}
+                    placeholder="Min 8 chars"
+                    required
+                  />
+                </div>
+                <div style={groupS}>
+                  <label style={labelS}>Role</label>
+                  <select
+                    style={inputS}
+                    value={newUser.role}
+                    onChange={e => setNewUser(u => ({ ...u, role: e.target.value }))}
+                  >
+                    <option value="editor">editor</option>
+                    <option value="superadmin">superadmin</option>
+                  </select>
+                </div>
+              </div>
+              <button type="submit" className="btn-save" disabled={newUserLoading}>
+                {newUserLoading ? 'Creating…' : '＋ Create User'}
+              </button>
+            </form>
+          </div>
+        </div>
+
+      </div>
     </div>
   )
 }
