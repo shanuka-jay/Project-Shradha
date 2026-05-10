@@ -76,6 +76,18 @@
   flex-direction: column;
 }
 
+.map-loading-text,
+.map-load-error {
+  margin: 12px 0;
+  color: #6b5d4a;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.map-load-error {
+  color: #9f2f2f;
+}
+
 .state-row {
   width: 100%;
   border: none;
