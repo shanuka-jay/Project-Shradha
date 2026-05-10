@@ -1,0 +1,479 @@
+/* ── Monks Directory – MonksDirectory.css ── */
+
+/* TOPBAR */
+.monks-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  height: 54px;
+  background: #fff;
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.monks-topbar-breadcrumb {
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.breadcrumb-site {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.breadcrumb-sep {
+  color: var(--text-muted);
+}
+
+.breadcrumb-page {
+  color: var(--text-secondary);
+}
+
+.monks-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.topbar-bell {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  padding: 5px;
+  border-radius: 5px;
+  transition: background 0.15s;
+}
+.topbar-bell:hover {
+  background: var(--main-bg);
+  color: var(--text-primary);
+}
+
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.user-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.user-role {
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+.user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--brand-gold-btn);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── CONTENT ── */
+.monks-content {
+  padding: 30px 32px 48px;
+  max-width: 1120px;
+}
+
+/* Header */
+.monks-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.monks-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+}
+
+.monks-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.add-monk-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--brand-gold-btn);
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Lato', sans-serif;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  letter-spacing: 0.01em;
+}
+.add-monk-btn:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+/* Search bar */
+.monks-searchbar-wrap {
+  position: relative;
+  max-width: 360px;
+  margin-bottom: 28px;
+}
+
+.monks-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.monks-search-input {
+  width: 100%;
+  padding: 9px 14px 9px 36px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: #fff;
+  font-size: 13px;
+  font-family: 'Lato', sans-serif;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.monks-search-input:focus {
+  border-color: var(--brand-gold);
+  box-shadow: 0 0 0 3px rgba(201,150,58,0.1);
+}
+.monks-search-input::placeholder { color: var(--text-muted); }
+
+/* ── GRID ── */
+.monks-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  margin-bottom: 30px;
+}
+
+/* Monk Card */
+.monk-card {
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s, transform 0.2s;
+  cursor: default;
+}
+.monk-card:hover {
+  box-shadow: 0 8px 32px rgba(44,21,3,0.10);
+  transform: translateY(-2px);
+}
+
+/* Photo area */
+.monk-photo-area {
+  position: relative;
+  height: 200px;
+  background: linear-gradient(160deg, #3B2008 0%, #6B4510 50%, #9A6B2A 100%);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.monk-photo-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #3B2008 0%, #6B4510 50%, #9A6B2A 100%);
+}
+
+.monk-initials {
+  font-family: 'Playfair Display', serif;
+  font-size: 52px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.18);
+  letter-spacing: 0.05em;
+  user-select: none;
+}
+
+.monk-photo-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 40%,
+    rgba(30,12,2,0.55) 100%
+  );
+  pointer-events: none;
+}
+
+/* Info area */
+.monk-info {
+  padding: 16px 18px 18px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.monk-role-badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+  align-self: flex-start;
+}
+
+.monk-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+  line-height: 1.3;
+}
+
+.monk-temple {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.monk-contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 16px;
+}
+
+.monk-contact-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.monk-contact-row svg {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+/* Action buttons */
+.monk-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.monk-edit-btn {
+  flex: 1;
+  padding: 8px 0;
+  background: var(--brand-gold-btn);
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Lato', sans-serif;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  letter-spacing: 0.01em;
+}
+.monk-edit-btn:hover { opacity: 0.85; }
+
+.monk-view-btn {
+  flex: 1;
+  padding: 8px 0;
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Lato', sans-serif;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  letter-spacing: 0.01em;
+}
+.monk-view-btn:hover {
+  background: var(--main-bg);
+  border-color: var(--brand-gold);
+}
+
+.monk-more-btn {
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  cursor: pointer;
+  padding: 7px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.monk-more-btn:hover {
+  background: var(--main-bg);
+  color: var(--text-secondary);
+}
+
+/* ── Add Another Monk card ── */
+.monk-add-card {
+  border: 2px dashed var(--border-color);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 340px;
+  background: #FDFAF5;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  outline: none;
+}
+.monk-add-card:hover {
+  border-color: var(--brand-gold);
+  background: #FBF6EE;
+}
+
+.monk-add-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.monk-add-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: border-color 0.2s, color 0.2s;
+}
+.monk-add-card:hover .monk-add-circle {
+  border-color: var(--brand-gold);
+  color: var(--brand-gold-dark);
+}
+
+.monk-add-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.monk-add-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* ── FOOTER / PAGINATION ── */
+.monks-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 4px;
+}
+
+.monks-showing {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+}
+
+.monks-pagination {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.monks-page-btn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-family: 'Lato', sans-serif;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.monks-page-btn:hover:not(:disabled) {
+  background: var(--main-bg);
+}
+.monks-page-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.monks-page-btn.active {
+  background: var(--brand-gold-btn);
+  border-color: var(--brand-gold-btn);
+  color: #fff;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .monks-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .monks-content {
+    padding: 20px 16px 40px;
+  }
+  .monks-grid {
+    grid-template-columns: 1fr;
+  }
+  .monks-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}
