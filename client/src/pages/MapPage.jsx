@@ -1,5 +1,4 @@
-import React, { useMemo, useState } from "react";
-import {templeData} from "../data/temples.js";
+import React, { useEffect, useMemo, useState } from "react";
 import TempleDetails from "../components/TempleDetails.jsx";
 import {
     ComposableMap,
@@ -18,13 +17,53 @@ const globeStart = { rotate: [98, -38, 0], scale: 300 };
 const usaFocus = { rotate: [98, -39, 0], scale: 520 };
 const minGlobeScale = 250;
 const maxGlobeScale = 760;
+const fallbackTempleImage =
+    "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=900&q=80";
 
 const regionOptions = ["All", "Northeast", "South", "Midwest", "West"];
+
+const normalizeStateName = (state) => {
+    if (state === "DC" || state === "D.C.") return "District of Columbia";
+    return state || "";
+};
+
+const normalizeTemple = (temple) => {
+    const lat = temple.lat ?? temple.location?.lat;
+    const lng = temple.lng ?? temple.location?.lng;
+    const gallery = temple.galleryImages?.length
+        ? temple.galleryImages
+        : temple.images?.length
+            ? temple.images
+            : temple.mainImage
+                ? [temple.mainImage]
+                : [];
+
+    return {
+        ...temple,
+        id: temple.id || temple._id,
+        state: normalizeStateName(temple.state),
+        region: temple.regionTag || temple.region || "Other",
+        contact: temple.phone || temple.contact || "",
+        description: temple.overview || temple.description || "",
+        imageUrl: temple.mainImage || temple.imageUrl || gallery[0] || fallbackTempleImage,
+        gallery,
+        monkImage: temple.chiefMonkImage || temple.monkImage || temple.mainImage || gallery[0] || fallbackTempleImage,
+        lat: lat === null || lat === undefined || lat === "" ? null : Number(lat),
+        lng: lng === null || lng === undefined || lng === "" ? null : Number(lng),
+    };
+};
+
+const hasTempleCoordinates = (temple) => (
+    Number.isFinite(temple.lat) && Number.isFinite(temple.lng)
+);
 
 const Map = () => {
     const [selectedState, setSelectedState] = useState(null);
     const [viewMode, setViewMode] = useState("map");
     const [selectedTemple, setSelectedTemple] = useState(null);
+    const [templeData, setTempleData] = useState([]);
+    const [templesLoading, setTemplesLoading] = useState(true);
+    const [templesError, setTemplesError] = useState("");
     const [searchTerm, setSearchTerm] = useState("");
     const [activeRegion, setActiveRegion] = useState("All");
     const [showOnlyWithTemples, setShowOnlyWithTemples] = useState(false);
@@ -32,19 +71,53 @@ const Map = () => {
     const [globeScale, setGlobeScale] = useState(globeStart.scale);
     const [dragStart, setDragStart] = useState(null);
 
+    useEffect(() => {
+        let ignore = false;
+
+        async function loadTemples() {
+            setTemplesLoading(true);
+            setTemplesError("");
+
+            try {
+                const response = await fetch("/api/temples");
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Could not load temples");
+                }
+
+                if (!ignore) {
+                    setTempleData(Array.isArray(data) ? data.map(normalizeTemple) : []);
+                }
+            } catch (error) {
+                if (!ignore) {
+                    setTemplesError(error.message);
+                    setTempleData([]);
+                }
+            } finally {
+                if (!ignore) {
+                    setTemplesLoading(false);
+                }
+            }
+        }
+
+        loadTemples();
+
+        return () => {
+            ignore = true;
+        };
+    }, []);
+
     const templeCountByState = useMemo(() => {
         return templeData.reduce((counts, temple) => {
             counts[temple.state] = (counts[temple.state] || 0) + 1;
             return counts;
         }, {});
-    }, []);
+    }, [templeData]);
 
     const statesWithTemples = useMemo(() => {
         return Object.keys(templeCountByState);
     }, [templeCountByState]);
-
-    const totalTemples = templeData.length;
-    const totalStates = statesWithTemples.length;
 
     const filteredStates = useMemo(() => {
         const groupedStates = statesWithTemples.map((state) => {
@@ -72,7 +145,7 @@ const Map = () => {
 
             return matchesSearch && matchesRegion;
         });
-    }, [searchTerm, activeRegion, statesWithTemples]);
+    }, [searchTerm, activeRegion, statesWithTemples, templeData]);
 
     const filteredTemples = useMemo(() => {
         if (!selectedState) return [];
@@ -80,9 +153,11 @@ const Map = () => {
         return templeData.filter(
             (temple) => temple.state.toLowerCase() === selectedState.toLowerCase()
         );
-    }, [selectedState]);
+    }, [selectedState, templeData]);
 
     const focusGlobe = (coordinates, scale = usaFocus.scale) => {
+        if (!coordinates.every(Number.isFinite)) return;
+
         const [lng, lat] = coordinates;
 
         setGlobeRotate([-lng, -lat, 0]);
@@ -150,7 +225,7 @@ const Map = () => {
 
         const firstTemple = templeData.find((temple) => temple.state === stateName);
 
-        if (firstTemple) {
+        if (firstTemple && hasTempleCoordinates(firstTemple)) {
             focusGlobe([firstTemple.lng, firstTemple.lat], 650);
         }
     };
@@ -165,7 +240,9 @@ const Map = () => {
     const handleTempleClick = (temple) => {
         setSelectedState(temple.state);
         setSelectedTemple(temple);
-        focusGlobe([temple.lng, temple.lat], 700);
+        if (hasTempleCoordinates(temple)) {
+            focusGlobe([temple.lng, temple.lat], 700);
+        }
         setViewMode("details");
     };
 
@@ -200,6 +277,10 @@ const Map = () => {
 
                 <h2>Temple Directory</h2>
 
+                {templesError && (
+                    <p className="map-load-error">{templesError}</p>
+                )}
+
                 <div className="search-box">
                     <input
                         type="text"
@@ -223,7 +304,11 @@ const Map = () => {
                 </div>
 
                 <div className="state-list">
-                    {filteredStates.map((item) => (
+                    {templesLoading && (
+                        <p className="map-loading-text">Loading temples...</p>
+                    )}
+
+                    {!templesLoading && filteredStates.map((item) => (
                         <div key={item.state}>
                             <button
                                 className={`state-row ${
@@ -233,7 +318,9 @@ const Map = () => {
                                     setSelectedState(item.state);
                                     setSelectedTemple(null);
                                     setViewMode("map");
-                                    focusGlobe([item.temples[0].lng, item.temples[0].lat], 650);
+                                    if (item.temples[0] && hasTempleCoordinates(item.temples[0])) {
+                                        focusGlobe([item.temples[0].lng, item.temples[0].lat], 650);
+                                    }
                                 }}
                             >
                                 <span>{item.state}</span>
@@ -434,7 +521,7 @@ const Map = () => {
                         </Geographies>
 
                         {templeData.map((temple) => (
-                            isCoordinateVisible([temple.lng, temple.lat]) && (
+                            hasTempleCoordinates(temple) && isCoordinateVisible([temple.lng, temple.lat]) && (
                                 <Marker
                                     key={temple.id}
                                     coordinates={[temple.lng, temple.lat]}
