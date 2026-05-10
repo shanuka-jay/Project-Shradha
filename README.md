@@ -4,30 +4,40 @@ An interactive web application to explore Buddhist temples across all U.S. state
 
 ## Tech Stack
 
-| Layer    | Technology                        |
-|----------|-----------------------------------|
-| Frontend | React (Vite), React Router, CSS   |
-| Backend  | Node.js, Express.js               |
-| Database | MongoDB (Mongoose)                |
+| Layer    | Technology                          |
+|----------|-------------------------------------|
+| Frontend | React (Vite), React Router, CSS     |
+| Backend  | Node.js, Express.js                 |
+| ORM      | Prisma ORM                          |
+| Database | MongoDB Atlas                       |
 
 ## Project Structure
 
 ```
 Project-Shradha/
-├── client/          # React frontend (Vite)
+├── client/                  # React frontend (Vite)
 │   ├── src/
-│   │   ├── components/   # Navbar, etc.
-│   │   ├── pages/        # Home, About, Contact, MapPage
+│   │   ├── assets/
+│   │   │   └── images/      # banner.png, vihara.jpeg
+│   │   ├── components/      # Navbar, Footer (+ CSS)
+│   │   ├── pages/           # Home, About, Contact, MapPage (+ CSS)
 │   │   ├── App.jsx
+│   │   ├── App.css          # Global reset & layout
+│   │   ├── index.css        # CSS variables & body styles
 │   │   └── main.jsx
+│   ├── index.html
+│   ├── vite.config.js
 │   └── package.json
-├── server/          # Node.js backend
+├── server/                  # Node.js backend
+│   ├── prisma/
+│   │   └── schema.prisma    # Database models (Temple, Contact)
 │   ├── src/
-│   │   ├── models/       # Temple.js, Contact.js
-│   │   ├── routes/       # temples.js, contact.js
+│   │   ├── routes/          # temples.js, contact.js
+│   │   ├── prismaClient.js  # Prisma singleton
 │   │   └── index.js
 │   ├── .env.example
 │   └── package.json
+├── .gitignore
 └── README.md
 ```
 
@@ -42,8 +52,11 @@ cd Project-Shradha
 ### 2. Setup the Backend
 ```bash
 cd server
-cp .env.example .env        # Fill in your MongoDB URI
+cp .env.example .env
+# Open .env and paste your MongoDB connection string as DATABASE_URL
 npm install
+npx prisma generate
+npx prisma db push
 npm run dev
 ```
 
@@ -54,18 +67,24 @@ npm install
 npm run dev
 ```
 
-Frontend runs on: http://localhost:3000  
-Backend runs on: http://localhost:5000
+Frontend → http://localhost:3000  
+Backend  → http://localhost:5000
 
 ## API Endpoints
 
-| Method | Endpoint                    | Description              |
-|--------|-----------------------------|--------------------------|
-| GET    | /api/temples                | Get all temples          |
-| GET    | /api/temples/state/:state   | Get temples by state     |
-| GET    | /api/temples/:id            | Get single temple        |
-| POST   | /api/contact                | Submit contact form      |
+| Method | Endpoint                  | Description              |
+|--------|---------------------------|--------------------------|
+| GET    | /api/temples              | Get all temples          |
+| GET    | /api/temples/state/:state | Get temples by state     |
+| GET    | /api/temples/:id          | Get single temple        |
+| POST   | /api/temples              | Add a new temple         |
+| POST   | /api/contact              | Submit contact form      |
+| GET    | /api/contact              | List all submissions     |
 
-## Team
+## Prisma Commands (run inside /server)
 
-- **Shanuka** – GitHub & MongoDB account management
+```bash
+npx prisma generate    # Regenerate client after schema changes
+npx prisma db push     # Sync schema to MongoDB
+npx prisma studio      # Open visual DB browser
+```

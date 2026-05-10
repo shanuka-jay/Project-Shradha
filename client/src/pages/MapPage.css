@@ -4,7 +4,7 @@
 }
 
 .map-page h1 {
-  color: #7b2d8b;
+  color: #c19b6c;
   margin-bottom: 1rem;
 }
 
@@ -23,7 +23,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #7b2d8b;
+  color: #c19b6c;
   font-size: 1.2rem;
-  border: 2px dashed #7b2d8b;
+  border: 2px dashed #c19b6c;
 }
