@@ -1,17 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const prisma = require('../prismaClient');
-
-// Only accept real http/https URLs (Cloudinary) — reject local /uploads/ paths
-function isValidUrl(url) {
-  if (!url || typeof url !== 'string') return false;
-  return url.startsWith('https://') || url.startsWith('http://');
-}
+const { normalizeImageUrl, normalizeImageUrlArray } = require('../utils/imageUrls');
 
 function toClientFormat(temple) {
-  const mainImage      = isValidUrl(temple.mainImage) ? temple.mainImage : null;
-  const chiefMonkImage = isValidUrl(temple.chiefMonkImage) ? temple.chiefMonkImage : null;
-  const galleryImages  = (temple.galleryImages || []).filter(isValidUrl);
+  const mainImage      = normalizeImageUrl(temple.mainImage);
+  const chiefMonkImage = normalizeImageUrl(temple.chiefMonkImage);
+  const galleryImages  = normalizeImageUrlArray(temple.galleryImages);
 
   const services = (temple.services || []).map(s => {
     try { return JSON.parse(s); } catch { return { name: s, icon: 'star', time: '' }; }
