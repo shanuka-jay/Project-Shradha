@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const prisma = require('../prismaClient');
 const { requireAdmin } = require('../middleware/auth');
+const { normalizeImageUrl, normalizeImageUrlArray } = require('../utils/imageUrls');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'saddha-secret-key';
 
@@ -85,10 +86,10 @@ router.post('/temples', requireAdmin, async (req, res) => {
         name, state, address, chiefMonk, phone, email,
         overview: overview || null,
         history: history || null,
-        mainImage: mainImage || null,
-        chiefMonkImage: chiefMonkImage || null,
-        galleryImages: galleryImages || [],
-        images: images || [],
+        mainImage: normalizeImageUrl(mainImage),
+        chiefMonkImage: normalizeImageUrl(chiefMonkImage),
+        galleryImages: normalizeImageUrlArray(galleryImages),
+        images: normalizeImageUrlArray(images),
         services: services || [],
         lat, lng,
         status: status || 'published',
@@ -115,10 +116,10 @@ router.put('/temples/:id', requireAdmin, async (req, res) => {
         name, state, address, chiefMonk, phone, email,
         overview: overview !== undefined ? overview : undefined,
         history: history !== undefined ? history : undefined,
-        mainImage: mainImage !== undefined ? mainImage : undefined,
-        chiefMonkImage: chiefMonkImage !== undefined ? chiefMonkImage : undefined,
-        galleryImages: galleryImages !== undefined ? (galleryImages || []) : undefined,
-        images: images !== undefined ? (images || []) : undefined,
+        mainImage: mainImage !== undefined ? normalizeImageUrl(mainImage) : undefined,
+        chiefMonkImage: chiefMonkImage !== undefined ? normalizeImageUrl(chiefMonkImage) : undefined,
+        galleryImages: galleryImages !== undefined ? normalizeImageUrlArray(galleryImages) : undefined,
+        images: images !== undefined ? normalizeImageUrlArray(images) : undefined,
         services: services !== undefined ? (services || []) : undefined,
         lat, lng, status, mapVisible, regionTag,
       },
@@ -155,7 +156,7 @@ router.patch('/temples/:id/main-image', requireAdmin, async (req, res) => {
     const { mainImage } = req.body;
     const temple = await prisma.temple.update({
       where: { id: req.params.id },
-      data: { mainImage },
+      data: { mainImage: normalizeImageUrl(mainImage) },
     });
     res.json(temple);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -166,7 +167,7 @@ router.patch('/temples/:id/chief-monk-image', requireAdmin, async (req, res) => 
     const { chiefMonkImage } = req.body;
     const temple = await prisma.temple.update({
       where: { id: req.params.id },
-      data: { chiefMonkImage },
+      data: { chiefMonkImage: normalizeImageUrl(chiefMonkImage) },
     });
     res.json(temple);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -177,7 +178,7 @@ router.patch('/temples/:id/gallery', requireAdmin, async (req, res) => {
     const { galleryImages } = req.body;
     const temple = await prisma.temple.update({
       where: { id: req.params.id },
-      data: { galleryImages: galleryImages || [] },
+      data: { galleryImages: normalizeImageUrlArray(galleryImages) },
     });
     res.json(temple);
   } catch (err) { res.status(500).json({ error: err.message }); }
