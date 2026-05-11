@@ -9,6 +9,7 @@ import {
     Sphere,
 } from "react-simple-maps";
 import { geoCentroid, geoDistance } from "d3-geo";
+import { templeData as fallbackTempleData } from "../data/temples.js";
 import "../pages/MapPage.css";
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json";
@@ -87,12 +88,15 @@ const Map = () => {
                 }
 
                 if (!ignore) {
-                    setTempleData(Array.isArray(data) ? data.map(normalizeTemple) : []);
+                    const temples = Array.isArray(data) && data.length > 0
+                        ? data
+                        : fallbackTempleData;
+                    setTempleData(temples.map(normalizeTemple));
                 }
             } catch (error) {
                 if (!ignore) {
-                    setTemplesError(error.message);
-                    setTempleData([]);
+                    setTemplesError("Showing sample temple data while the live directory is unavailable.");
+                    setTempleData(fallbackTempleData.map(normalizeTemple));
                 }
             } finally {
                 if (!ignore) {
@@ -243,7 +247,7 @@ const Map = () => {
         if (hasTempleCoordinates(temple)) {
             focusGlobe([temple.lng, temple.lat], 700);
         }
-        setViewMode("details");
+        setViewMode("map");
     };
 
     const handleMapTempleClick = (event, temple) => {
@@ -745,7 +749,9 @@ const Map = () => {
                                     <div className="details-actions">
                                         <a
                                             href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                                                selectedTemple.address
+                                                hasTempleCoordinates(selectedTemple)
+                                                    ? `${selectedTemple.lat},${selectedTemple.lng}`
+                                                    : selectedTemple.address || selectedTemple.name
                                             )}`}
                                             target="_blank"
                                             rel="noreferrer"

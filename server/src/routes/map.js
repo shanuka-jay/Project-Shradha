@@ -43,9 +43,16 @@ router.patch('/:id/visibility', requireAdmin, async (req, res) => {
 router.patch('/:id/coords', requireAdmin, async (req, res) => {
   try {
     const { lat, lng } = req.body;
+    const parsedLat = Number(lat);
+    const parsedLng = Number(lng);
+
+    if (!Number.isFinite(parsedLat) || !Number.isFinite(parsedLng)) {
+      return res.status(400).json({ error: 'Valid latitude and longitude are required' });
+    }
+
     const temple = await prisma.temple.update({
       where: { id: req.params.id },
-      data: { lat: parseFloat(lat), lng: parseFloat(lng) },
+      data: { lat: parsedLat, lng: parsedLng },
     });
     res.json(temple);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -54,22 +61,57 @@ router.patch('/:id/coords', requireAdmin, async (req, res) => {
 // POST /api/admin/map/geocode — single address geocode via OpenCage
 router.post('/geocode', requireAdmin, async (req, res) => {
   try {
-    const { address } = req.body;
+    const address = typeof req.body.address === 'string' ? req.body.address.trim() : '';
+
+    if (!address) {
+      return res.status(400).json({ error: 'Address is required' });
+    }
+
     const apiKey = process.env.OPENCAGE_KEY;
     if (!apiKey) {
-      // Fallback: return dummy for dev without key
-      return res.json({ lat: null, lng: null, formatted: address, error: 'No OPENCAGE_KEY set' });
+      return res.status(400).json({ error: 'No OPENCAGE_KEY set' });
     }
+
     const url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(address)}&key=${apiKey}&limit=1&countrycode=us`;
-    const r = await fetch(url);
-    const data = await r.json();
-    if (data.results && data.results.length > 0) {
-      const { lat, lng } = data.results[0].geometry;
-      res.json({ lat, lng, formatted: data.results[0].formatted });
-    } else {
-      res.json({ lat: null, lng: null, error: 'No results' });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    const r = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    let data;
+    try {
+      data = await r.json();
+    } catch {
+      return res.status(502).json({ error: 'Geocoding service returned an invalid response' });
     }
-  } catch (err) { res.status(500).json({ error: err.message }); }
+
+    if (!r.ok) {
+      return res.status(r.status).json({
+        error: data?.status?.message || data?.message || 'Geocoding request failed',
+      });
+    }
+
+    const firstResult = data.results?.[0];
+    const lat = Number(firstResult?.geometry?.lat);
+    const lng = Number(firstResult?.geometry?.lng);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      return res.status(404).json({ error: 'No geocoding result found for that address' });
+    }
+
+    res.json({
+      lat,
+      lng,
+      formatted: firstResult.formatted || address,
+    });
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      return res.status(504).json({ error: 'Geocoding request timed out' });
+    }
+
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // POST /api/admin/map/bulk-geocode — geocode all temples missing coords

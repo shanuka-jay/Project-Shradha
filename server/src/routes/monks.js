@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const prisma = require('../prismaClient');
 const { requireAdmin } = require('../middleware/auth');
+const { normalizeImageUrl } = require('../utils/imageUrls');
 
 // GET /api/admin/monks
 router.get('/', requireAdmin, async (req, res) => {
@@ -47,7 +48,7 @@ router.post('/', requireAdmin, async (req, res) => {
       biography, role, profilePhoto, socialLinks, contactInfo, linkedTempleId, status } = req.body;
     const monk = await prisma.monk.create({
       data: { legalName, displayName, ordinationDate, nationality, residence,
-        languages: languages || [], biography, role, profilePhoto,
+        languages: languages || [], biography, role, profilePhoto: normalizeImageUrl(profilePhoto),
         socialLinks: socialLinks || {}, contactInfo,
         linkedTempleId: linkedTempleId || null,
         status: status || 'published' },
@@ -64,7 +65,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
     const monk = await prisma.monk.update({
       where: { id: req.params.id },
       data: { legalName, displayName, ordinationDate, nationality, residence,
-        languages: languages || [], biography, role, profilePhoto,
+        languages: languages || [], biography, role, profilePhoto: normalizeImageUrl(profilePhoto),
         socialLinks: socialLinks || {}, contactInfo,
         linkedTempleId: linkedTempleId || null, status },
     });

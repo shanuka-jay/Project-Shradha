@@ -8,6 +8,8 @@ const STATUS_COLORS = {
   pending:   { dot: '#ea580c', bg: '#ffedd5', label: 'Pending' },
 }
 
+const hasCoords = (temple) => Number.isFinite(Number(temple.lat)) && Number.isFinite(Number(temple.lng))
+
 export default function MapManagement() {
   const { token } = useAuth()
   const [temples, setTemples] = useState([])
@@ -61,7 +63,7 @@ export default function MapManagement() {
         body: JSON.stringify({ address: `${temple.address}, ${temple.state}` }),
       })
       const data = await res.json()
-      if (data.lat && data.lng) {
+      if (Number.isFinite(Number(data.lat)) && Number.isFinite(Number(data.lng))) {
         await fetch(`/api/admin/map/${temple.id}/coords`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -85,7 +87,7 @@ export default function MapManagement() {
   }
 
   const published = temples.filter(t => t.status === 'published').length
-  const withCoords = temples.filter(t => t.lat && t.lng).length
+  const withCoords = temples.filter(hasCoords).length
   const visible = temples.filter(t => t.mapVisible).length
 
   const filteredTemples = temples.filter(t =>
@@ -177,12 +179,12 @@ export default function MapManagement() {
               </thead>
               <tbody>
                 {filteredTemples.map(t => {
-                  const hasCoords = t.lat && t.lng
+                  const templeHasCoords = hasCoords(t)
                   return (
                     <tr key={t.id}>
                       <td>
                         <div style={{ display:'flex', alignItems:'center', gap:'0.5rem' }}>
-                          <span style={{ width:8, height:8, borderRadius:'50%', background: hasCoords ? STATUS_COLORS[t.status]?.dot || '#888' : '#dc2626', flexShrink:0, display:'inline-block' }} />
+                          <span style={{ width:8, height:8, borderRadius:'50%', background: templeHasCoords ? STATUS_COLORS[t.status]?.dot || '#888' : '#dc2626', flexShrink:0, display:'inline-block' }} />
                           <span className="td-temple-name">{t.name}</span>
                         </div>
                         {t.address && <div className="td-temple-addr" style={{ paddingLeft:'1rem' }}>{t.address}</div>}
@@ -190,7 +192,7 @@ export default function MapManagement() {
                       <td>{t.state}</td>
                       <td><span className={`badge badge-${t.status}`}>{t.status}</span></td>
                       <td style={{ fontFamily:'monospace', fontSize:'0.8rem', color:'var(--text-2)' }}>
-                        {hasCoords ? `${t.lat.toFixed(5)}, ${t.lng.toFixed(5)}` : <span style={{ color:'#dc2626', fontSize:'0.8rem' }}>No coords</span>}
+                        {templeHasCoords ? `${Number(t.lat).toFixed(5)}, ${Number(t.lng).toFixed(5)}` : <span style={{ color:'#dc2626', fontSize:'0.8rem' }}>No coords</span>}
                       </td>
                       <td style={{ textAlign:'center' }}>
                         <button

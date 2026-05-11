@@ -22,6 +22,7 @@ const SERVICE_ICONS = [
 const TABS = ['Basic Info','Overview','History','Main Image','Chief Monk','Gallery','Services','Location','Settings']
 
 const EMPTY_SERVICE = { name: '', icon: 'sun', time: '' }
+const hasCoordValues = (lat, lng) => Number.isFinite(Number(lat)) && Number.isFinite(Number(lng))
 
 const EMPTY = {
   name:'', state:'', address:'', chiefMonk:'', phone:'', email:'',
@@ -132,7 +133,7 @@ export default function TempleForm() {
           regionTag: data.regionTag || '',
           mapVisible: data.mapVisible !== false,
         })
-        if (data.lat && data.lng) setMapPreview({ lat: data.lat, lng: data.lng })
+        if (hasCoordValues(data.lat, data.lng)) setMapPreview({ lat: data.lat, lng: data.lng })
       } catch (err) { setError(err.message) }
       finally { setFetchLoading(false) }
     }
@@ -174,7 +175,7 @@ export default function TempleForm() {
         body: JSON.stringify({ address: `${form.address}, ${form.state}` }),
       })
       const data = await res.json()
-      if (data.lat && data.lng) {
+      if (hasCoordValues(data.lat, data.lng)) {
         setForm(f => ({ ...f, lat: String(data.lat), lng: String(data.lng) }))
         setMapPreview({ lat: data.lat, lng: data.lng })
         setSuccess(`Geocoded: ${data.formatted}`)
@@ -560,7 +561,7 @@ export default function TempleForm() {
                 <IconSVG path="M11 17.25a6.25 6.25 0 1 1 0-12.5 6.25 6.25 0 0 1 0 12.5zM16 16l4.5 4.5" size={14} />
                 {geocoding ? 'Geocoding…' : 'Auto-geocode from Address'}
               </button>
-              <button type="button" className="btn-preview-map" onClick={() => { if (form.lat && form.lng) setMapPreview({ lat: parseFloat(form.lat), lng: parseFloat(form.lng) }) }} disabled={!form.lat || !form.lng}>
+              <button type="button" className="btn-preview-map" onClick={() => { if (hasCoordValues(form.lat, form.lng)) setMapPreview({ lat: parseFloat(form.lat), lng: parseFloat(form.lng) }) }} disabled={!hasCoordValues(form.lat, form.lng)}>
                 <IconSVG path="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" size={14} />
                 Preview Pin
               </button>

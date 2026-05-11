@@ -14,22 +14,8 @@
 
 require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
+const { normalizeImageUrl, normalizeImageUrlArray } = require('../src/utils/imageUrls');
 const prisma = new PrismaClient();
-
-function fixUrl(url) {
-  if (!url || typeof url !== 'string') return null;
-  // Extract Cloudinary URL if it got a localhost prefix prepended
-  const match = url.match(/(https:\/\/res\.cloudinary\.com\/.+)/);
-  if (match) return match[1];
-  // Keep any other valid https URL
-  if (url.startsWith('https://') || url.startsWith('http://')) return url;
-  // Everything else (local paths, empty strings) → null
-  return null;
-}
-
-function fixUrlArray(arr) {
-  return (arr || []).map(fixUrl).filter(Boolean);
-}
 
 async function main() {
   console.log('🔍 Scanning database for broken image URLs...\n');
@@ -39,10 +25,10 @@ async function main() {
   let templesFixed = 0;
 
   for (const t of temples) {
-    const mainImage      = fixUrl(t.mainImage);
-    const chiefMonkImage = fixUrl(t.chiefMonkImage);
-    const galleryImages  = fixUrlArray(t.galleryImages);
-    const images         = fixUrlArray(t.images);
+    const mainImage      = normalizeImageUrl(t.mainImage);
+    const chiefMonkImage = normalizeImageUrl(t.chiefMonkImage);
+    const galleryImages  = normalizeImageUrlArray(t.galleryImages);
+    const images         = normalizeImageUrlArray(t.images);
 
     const changed =
       mainImage      !== t.mainImage ||
@@ -65,7 +51,7 @@ async function main() {
   let monksFixed = 0;
 
   for (const m of monks) {
-    const profilePhoto = fixUrl(m.profilePhoto);
+    const profilePhoto = normalizeImageUrl(m.profilePhoto);
     if (profilePhoto !== m.profilePhoto) {
       await prisma.monk.update({ where: { id: m.id }, data: { profilePhoto } });
       console.log(`  ✓ Fixed monk: ${m.legalName}`);
