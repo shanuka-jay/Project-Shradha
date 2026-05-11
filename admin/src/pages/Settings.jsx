@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { Fragment, useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import './Settings.css'
 
 export default function Settings() {
   const { admin, token } = useAuth()
+  const canManageUsers = admin?.role === 'superadmin'
 
   /* ── Change Password ── */
   const [pwForm, setPwForm]       = useState({ currentPassword: '', newPassword: '', confirm: '' })
@@ -28,12 +29,13 @@ export default function Settings() {
 
   /* ── Fetch users on mount ── */
   useEffect(() => {
+    if (!canManageUsers) return
     setUsersLoading(true)
     fetch('/api/admin/settings/users', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(d => { setUsers(Array.isArray(d) ? d : []); setUsersLoading(false) })
       .catch(() => setUsersLoading(false))
-  }, [token])
+  }, [token, canManageUsers])
 
   /* ── Handlers ── */
   function handlePwChange(e) {
@@ -200,6 +202,7 @@ export default function Settings() {
         </div>
 
         {/* ── Admin Users & Permissions ── */}
+        {canManageUsers && (
         <div className="settings-card settings-card-wide">
           <h2 className="settings-card-title">Admin Users &amp; Permissions</h2>
 
@@ -226,8 +229,8 @@ export default function Settings() {
                     </tr>
                   )}
                   {users.map(u => (
-                    <>
-                      <tr key={u.id} style={{ background: editingUser?.id === u.id ? 'var(--surface-2, #f0f4ff)' : undefined }}>
+                    <Fragment key={u.id}>
+                      <tr style={{ background: editingUser?.id === u.id ? 'var(--surface-2, #f0f4ff)' : undefined }}>
                         <td style={{ fontWeight: 500 }}>{u.name}</td>
                         <td style={{ color: 'var(--text-2)' }}>{u.email}</td>
                         <td>
@@ -327,7 +330,7 @@ export default function Settings() {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </Fragment>
                   ))}
                 </tbody>
               </table>
@@ -393,6 +396,7 @@ export default function Settings() {
             </form>
           </div>
         </div>
+        )}
 
       </div>
     </div>
