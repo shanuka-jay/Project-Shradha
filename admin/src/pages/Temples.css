@@ -1,0 +1,12 @@
+/* Temple-specific styles only — global classes live in index.css */
+.temples-page { max-width: 1200px; }
+
+/* Status toggle button in table */
+.temples-table .badge {
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.temples-table .badge:hover {
+  opacity: 0.8;
+  transform: scale(0.97);
+}
