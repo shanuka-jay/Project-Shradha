@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import './Dashboard.css'
 
+const hasCoords = (temple) => Number.isFinite(Number(temple.lat)) && Number.isFinite(Number(temple.lng))
+
 function StatCard({ label, value, sub, subColor, icon, to }) {
   const inner = (
     <div className="stat-card">
@@ -106,7 +108,7 @@ export default function Dashboard() {
                     <td style={{ color:'var(--text-2)', fontSize:'0.85rem' }}>{t.state}</td>
                     <td><span className={`badge badge-${t.status || 'published'}`}>{t.status || 'published'}</span></td>
                     <td style={{ textAlign:'center', fontSize:'0.85rem' }}>
-                      {t.lat && t.lng
+                      {hasCoords(t)
                         ? <i className="fas fa-map-marker-alt" title="Has coordinates" style={{ color:'#16a34a' }}></i>
                         : <i className="fas fa-exclamation-triangle" title="Missing coordinates" style={{ color:'#dc2626' }}></i>}
                     </td>
