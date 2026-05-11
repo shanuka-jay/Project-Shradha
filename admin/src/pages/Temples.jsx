@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import './Temples.css'
 
 const US_STATES = ['Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming','DC']
+const hasCoords = (temple) => Number.isFinite(Number(temple.lat)) && Number.isFinite(Number(temple.lng))
 
 export default function Temples() {
   const { token } = useAuth()
@@ -133,8 +134,8 @@ export default function Temples() {
                     </button>
                   </td>
                   <td style={{ textAlign:'center' }}>
-                    {t.lat && t.lng
-                      ? <i className="fas fa-map-marker-alt" title={`${t.lat.toFixed(4)}, ${t.lng.toFixed(4)}`} style={{ color:'#16a34a', fontSize:'1rem' }}></i>
+                    {hasCoords(t)
+                      ? <i className="fas fa-map-marker-alt" title={`${Number(t.lat).toFixed(4)}, ${Number(t.lng).toFixed(4)}`} style={{ color:'#16a34a', fontSize:'1rem' }}></i>
                       : <i className="fas fa-exclamation-triangle" title="No coordinates" style={{ color:'#dc2626', fontSize:'0.8rem' }}></i>}
                   </td>
                   <td className="td-date">{new Date(t.createdAt).toLocaleDateString('en-US', { month:'short', day:'2-digit', year:'numeric' })}</td>
