@@ -29,6 +29,27 @@ router.post('/users', requireAdmin, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// PUT /api/admin/settings/users/:id
+router.put('/users/:id', requireAdmin, async (req, res) => {
+  if (req.admin.role !== 'superadmin') return res.status(403).json({ error: 'Forbidden' });
+  const { name, email, password } = req.body;
+
+  try {
+    const data = {};
+    if (name !== undefined) data.name = name;
+    if (email !== undefined) data.email = email;
+    if (password) data.passwordHash = await bcrypt.hash(password, 12);
+
+    const admin = await prisma.admin.update({
+      where: { id: req.params.id },
+      data,
+      select: { id: true, name: true, email: true, role: true, createdAt: true },
+    });
+
+    res.json(admin);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // PUT /api/admin/settings/users/:id/role
 router.put('/users/:id/role', requireAdmin, async (req, res) => {
   if (req.admin.role !== 'superadmin') return res.status(403).json({ error: 'Forbidden' });
