@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Home from './pages/Home'
@@ -8,6 +8,9 @@ import MapPage from './pages/MapPage'
 import './App.css'
 
 function App() {
+  const location = useLocation()
+  const isMapPage = location.pathname === '/map'
+
   return (
     <>
       <Navbar />
@@ -19,7 +22,7 @@ function App() {
           <Route path="/map" element={<MapPage />} />
         </Routes>
       </div>
-      <Footer />
+      {!isMapPage && <Footer />}
     </>
   )
 }
