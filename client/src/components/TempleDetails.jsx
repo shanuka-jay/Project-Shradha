@@ -1,7 +1,7 @@
 import React from 'react';
 import "./TempleDetails.css"
 
-const TempleDetails = ({temple, onBack }) =>{
+const TempleDetails = ({ temple, onBack }) => {
     if (!temple){
         return (
             <div className="temple-details-page">
