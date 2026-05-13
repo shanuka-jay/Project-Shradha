@@ -5,12 +5,12 @@
 }
 
 .about__inner {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 60px;
+  width: 100%;
+  margin: 0;
+  padding: 0 48px;
   display: grid;
-  grid-template-columns: 1fr 1.15fr;
-  gap: 48px;
+  grid-template-columns: 380px 1fr;
+  gap: 40px;
   align-items: stretch;
 }
 
@@ -145,9 +145,8 @@
 .about__images {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
-  grid-template-rows: 1.2fr 1fr;
+  grid-template-rows: 1.4fr 1fr;
   gap: 12px;
-  min-height: 560px;
 }
 
 .about__img {
@@ -191,6 +190,6 @@
   }
 
   .about__images {
-    min-height: 360px;
+    grid-template-rows: 1.4fr 1fr;
   }
 }
