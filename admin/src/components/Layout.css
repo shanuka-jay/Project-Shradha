@@ -1,0 +1,50 @@
+/* ── Main shell layout ─────────────────────────── */
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
+  position: relative;
+}
+
+/* Sidebar is position:fixed — main content needs matching left margin */
+.layout-main {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100vh;
+  /* Width is everything except sidebar */
+  width: calc(100vw - var(--sidebar-width));
+  max-width: calc(100vw - var(--sidebar-width));
+}
+
+.layout-content {
+  flex: 1;
+  padding: 2rem 2.25rem;
+  overflow-x: hidden;
+}
+
+/* Mobile overlay (behind open sidebar, blocks main) */
+.layout-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 190;
+}
+
+@media (max-width: 900px) {
+  .layout-main {
+    margin-left: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+  .layout-overlay {
+    display: block;
+  }
+  .layout-content {
+    padding: 1.25rem;
+  }
+}
+

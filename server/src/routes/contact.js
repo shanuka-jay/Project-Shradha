@@ -9,7 +9,7 @@ router.post('/', async (req, res) => {
     const submission = await prisma.contact.create({
       data: { firstName, lastName, email, templeName, purpose, message },
     });
-    res.status(201).json({ message: 'Message received!', data: submission });
+    res.status(201).json({ message: 'Message received', data: submission });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -11,16 +11,88 @@ datasource db {
 }
 
 model Temple {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  state     String
-  address   String?
-  history   String?
-  images    String[]
-  lat       Float?
-  lng       Float?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  state          String
+  address        String?
+  chiefMonk      String?
+  phone          String?
+  email          String?
+  // Content sections - updated separately
+  overview       String?
+  history        String?
+  // Images - each managed separately
+  mainImage      String?
+  chiefMonkImage String?
+  galleryImages  String[]
+  // Legacy images array (backwards compat)
+  images         String[]
+  // Services stored as JSON strings: {"name":"Sunday Dhamma","icon":"sun","time":"9:00 AM"}
+  services       String[]
+  lat            Float?
+  lng            Float?
+  status         String   @default("published")
+  mapVisible     Boolean  @default(true)
+  regionTag      String?
+  monks          Monk[]
+  events         Event[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Monk {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+
+  // ── Core identity ────────────────────────────────────────────
+  legalName      String
+  displayName    String?          // Dharma / display name shown publicly
+  titles         String?          // e.g. "Senior Dhamma Teacher · Pali Scholar"
+  role           String?          // e.g. "Abbot", "Chief Incumbent"
+
+  // ── Profile details (left column on public page) ─────────────
+  dateOfBirth    String?          // Free-text, e.g. "5 January 1920"
+  ordinationDate String?          // Free-text, e.g. "24 June 1954 · Received Upasampada"
+  nationality    String?
+  residence      String?          // e.g. "Kandy, Sri Lanka"
+  languages      String[]
+
+  // ── About / Biography section ────────────────────────────────
+  biography      String?          // Full multi-paragraph biography
+  quote          String?          // Pull-quote shown in golden block
+
+  // ── Contact & Enquiries section ──────────────────────────────
+  contactInfo    String?          // Legacy / primary email (backwards compat)
+  email          String?          // Explicit email field
+  templePhone    String?          // Temple office phone
+  address        String?          // Physical address for contact section
+  appointment    String?          // e.g. "By prior arrangement only"
+
+  // ── Photo & Social ───────────────────────────────────────────
+  profilePhoto   String?          // Cloudinary URL
+  socialLinks    Json?            // { website, facebook, youtube, wikipedia, pinterest }
+
+  // ── Relations & meta ─────────────────────────────────────────
+  linkedTempleId String?  @db.ObjectId
+  temple         Temple?  @relation(fields: [linkedTempleId], references: [id])
+  status         String   @default("published")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Event {
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  title            String
+  dateTime         DateTime
+  endDateTime      DateTime?
+  eventType        String
+  description      String?
+  linkedTempleId   String?   @db.ObjectId
+  temple           Temple?   @relation(fields: [linkedTempleId], references: [id])
+  recurring        Boolean   @default(false)
+  recurringPattern String?
+  status           String    @default("published")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }
 
 model Contact {
@@ -31,5 +103,24 @@ model Contact {
   templeName String?
   purpose    String?
   message    String
+  read       Boolean  @default(false)
+  archived   Boolean  @default(false)
   createdAt  DateTime @default(now())
+}
+
+model Admin {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("editor")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model SiteSettings {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
 }

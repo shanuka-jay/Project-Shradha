@@ -17,10 +17,16 @@ An interactive web application to explore Buddhist temples across all U.S. state
 Project-Shradha/
 ├── client/                  # React frontend (Vite)
 │   ├── src/
-│   │   ├── components/      # Navbar
-│   │   ├── pages/           # Home, About, Contact, MapPage
+│   │   ├── assets/
+│   │   │   └── images/      # banner.png, vihara.jpeg
+│   │   ├── components/      # Navbar, Footer (+ CSS)
+│   │   ├── pages/           # Home, About, Contact, MapPage (+ CSS)
 │   │   ├── App.jsx
+│   │   ├── App.css          # Global reset & layout
+│   │   ├── index.css        # CSS variables & body styles
 │   │   └── main.jsx
+│   ├── index.html
+│   ├── vite.config.js
 │   └── package.json
 ├── server/                  # Node.js backend
 │   ├── prisma/
@@ -73,6 +79,7 @@ Backend  → http://localhost:5000
 | GET    | /api/temples/:id          | Get single temple        |
 | POST   | /api/temples              | Add a new temple         |
 | POST   | /api/contact              | Submit contact form      |
+| GET    | /api/contact              | List all submissions     |
 
 ## Prisma Commands (run inside /server)
 
