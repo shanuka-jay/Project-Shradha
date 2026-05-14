@@ -77,6 +77,38 @@
   transform: translateY(-3px);
 }
 
+/* Link card reset — remove default <a> styles */
+.howhelps__card--link {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  position: relative;
+}
+
+/* Arrow indicator */
+.howhelps__card-arrow {
+  display: inline-block;
+  margin-top: auto;
+  padding-top: 16px;
+  font-size: 16px;
+  color: #c9a050;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 0.22s, transform 0.22s;
+}
+
+.howhelps__card--link:hover .howhelps__card-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.howhelps__card--link:hover .howhelps__icon svg {
+  stroke: #b38b41;
+  transition: stroke 0.2s;
+}
+
 .howhelps__icon {
   font-size: 22px;
   margin-bottom: 14px;

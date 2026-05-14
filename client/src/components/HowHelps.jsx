@@ -16,6 +16,7 @@ const features = [
       </svg>
     ),
     title: 'Temple Directory',
+    href: '/map',
     desc: 'A comprehensive database of all 73 Sri Lankan Buddhist temples across the USA — complete with contact details, history, and monk information.',
   },
   {
@@ -27,6 +28,7 @@ const features = [
       </svg>
     ),
     title: 'Search & Discover',
+    href: '/map',
     desc: 'Search temples by name, state, or region. Filter results by tradition or offerings to find exactly what you\'re seeking.',
   },
   {
@@ -38,6 +40,7 @@ const features = [
       </svg>
     ),
     title: 'Interactive Map',
+    href: '/map',
     desc: 'A real interactive map with precise temple locations. Navigate, zoom, and explore — get directions with one click.',
   },
   {
@@ -51,6 +54,7 @@ const features = [
       </svg>
     ),
     title: 'Temple Histories',
+    href: '/map',
     desc: 'Read rich historical narratives, founding stories, and cultural significance for every vihara — preserving heritage for future generations.',
   },
   {
@@ -67,6 +71,7 @@ const features = [
       </svg>
     ),
     title: 'Events & Programs',
+    href: '/map',
     desc: 'Discover Dhamma teachings, Poya day programs, meditation retreats, and community events happening at viharas near you.',
   },
   {
@@ -79,6 +84,7 @@ const features = [
       </svg>
     ),
     title: 'Add Your Temple',
+    href: '/contact',
     desc: 'Know of a temple not yet listed? Submit it through our contact form and help us build the most complete directory of Sri Lankan Buddhism in America.',
   },
 ];
@@ -101,11 +107,12 @@ const HowHelps = () => {
 
         <div className="howhelps__grid">
           {features.map((f, i) => (
-            <div key={i} className="howhelps__card">
+            <a key={i} href={f.href} className="howhelps__card howhelps__card--link">
               <div className="howhelps__icon">{f.icon}</div>
               <h3 className="howhelps__card-title">{f.title}</h3>
               <p className="howhelps__card-desc">{f.desc}</p>
-            </div>
+              <span className="howhelps__card-arrow">→</span>
+            </a>
           ))}
         </div>
       </div>
