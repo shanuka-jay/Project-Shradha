@@ -28,7 +28,7 @@ function Navbar() {
             <li><Link to="/" className={location.pathname === '/' ? 'active' : ''} onClick={closeMenu}>HOME</Link></li>
             <li><Link to="/about" className={location.pathname === '/about' ? 'active' : ''} onClick={closeMenu}>ABOUT</Link></li>
             <li><Link to="/map" className={location.pathname === '/map' ? 'active' : ''} onClick={closeMenu}>MAP</Link></li>
-            <li><Link to="/contact" className={location.pathname === '/contact' ? 'active' : ''} onClick={closeMenu}>CONTACT</Link></li>
+            <li><Link to="/contact" className={(location.pathname === '/contact' || location.pathname === '/profile') ? 'active' : ''} onClick={closeMenu}>CONTACT</Link></li>
           </ul>
           <Link to="/map" className="btn-explore" onClick={closeMenu}>EXPLORE MAP</Link>
         </div>
