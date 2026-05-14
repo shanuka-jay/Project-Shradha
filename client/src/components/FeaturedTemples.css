@@ -191,3 +191,108 @@
 .featured__info-cta:hover {
   background: #b38b41;
 }
+
+/* ---- Chief monk line ---- */
+.featured__info-monk {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  color: #c9a050;
+  margin-bottom: 12px;
+  letter-spacing: 0.2px;
+}
+
+/* ---- Counter badge (top-left of image) ---- */
+.featured__counter {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  backdrop-filter: blur(4px);
+}
+
+/* ---- Dot indicators ---- */
+.featured__dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.featured__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid #c9a050;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s;
+}
+
+.featured__dot--active {
+  background: #c9a050;
+}
+
+/* ---- Error state ---- */
+.featured__error {
+  background: #fff5f5;
+  border: 1px solid #f5a5a5;
+  color: #9b2222;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  padding: 16px 20px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+/* ---- Empty state ---- */
+.featured__empty {
+  text-align: center;
+  padding: 60px 20px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: #9a8e82;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---- Skeleton loader ---- */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+.featured__skeleton {
+  pointer-events: none;
+}
+
+.featured__skeleton-img {
+  background: linear-gradient(90deg, #ede8e0 25%, #f5f0e8 50%, #ede8e0 75%);
+  background-size: 600px 100%;
+  animation: shimmer 1.4s infinite linear;
+  min-height: 340px;
+}
+
+.featured__skeleton-line {
+  height: 14px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  background: linear-gradient(90deg, #ede8e0 25%, #f5f0e8 50%, #ede8e0 75%);
+  background-size: 600px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+.featured__skeleton-line--short  { width: 30%; }
+.featured__skeleton-line--title   { width: 70%; height: 24px; margin-bottom: 16px; }
+.featured__skeleton-line--mid     { width: 50%; }
+
