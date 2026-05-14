@@ -240,3 +240,36 @@
 .contact__submit:hover {
   background: #b38b41;
 }
+
+.contact__submit:disabled {
+  background: #d4bc8a;
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+/* ---- Feedback banners ---- */
+.contact__feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.contact__feedback--success {
+  background: #f0faf2;
+  border: 1px solid #7ecb91;
+  color: #1e6635;
+}
+
+.contact__feedback--error {
+  background: #fff5f5;
+  border: 1px solid #f5a5a5;
+  color: #9b2222;
+}
+
