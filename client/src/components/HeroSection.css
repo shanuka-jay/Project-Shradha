@@ -344,3 +344,32 @@
   border-color: rgba(255,255,255,0.45);
   background: rgba(255,255,255,0.12);
 }
+
+/* ---- Hero featured panel skeleton ---- */
+@keyframes heroShimmer {
+  0%   { opacity: 0.35; }
+  50%  { opacity: 0.65; }
+  100% { opacity: 0.35; }
+}
+
+.hero__featured-item--skeleton {
+  animation: heroShimmer 1.4s infinite ease-in-out;
+  pointer-events: none;
+}
+
+.hero__featured-skeleton-text {
+  display: inline-block;
+  width: 68%;
+  height: 8px;
+  background: rgba(255,255,255,0.22);
+  border-radius: 3px;
+}
+
+.hero__featured-skeleton-abbr {
+  display: inline-block;
+  width: 14px;
+  height: 8px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 3px;
+}
+

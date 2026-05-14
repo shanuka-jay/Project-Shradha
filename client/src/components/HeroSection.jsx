@@ -1,7 +1,82 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './HeroSection.css';
 
+// Region → state abbreviation mapping
+const REGION_STATES = {
+  'East Coast': ['ME','NH','VT','MA','RI','CT','NY','NJ','DE','MD','DC','VA','NC','SC','GA','FL'],
+  'West Coast': ['WA','OR','CA','AK','HI'],
+  'Midwest':    ['OH','IN','IL','MI','WI','MN','IA','MO','ND','SD','NE','KS'],
+  'South':      ['TX','OK','AR','LA','MS','AL','TN','KY','WV'],
+};
+
+// Full state name → abbreviation
+const STATE_ABBR = {
+  'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA',
+  'Colorado':'CO','Connecticut':'CT','Delaware':'DE','District of Columbia':'DC',
+  'Florida':'FL','Georgia':'GA','Hawaii':'HI','Idaho':'ID','Illinois':'IL',
+  'Indiana':'IN','Iowa':'IA','Kansas':'KS','Kentucky':'KY','Louisiana':'LA',
+  'Maine':'ME','Maryland':'MD','Massachusetts':'MA','Michigan':'MI','Minnesota':'MN',
+  'Mississippi':'MS','Missouri':'MO','Montana':'MT','Nebraska':'NE','Nevada':'NV',
+  'New Hampshire':'NH','New Jersey':'NJ','New Mexico':'NM','New York':'NY',
+  'North Carolina':'NC','North Dakota':'ND','Ohio':'OH','Oklahoma':'OK','Oregon':'OR',
+  'Pennsylvania':'PA','Rhode Island':'RI','South Carolina':'SC','South Dakota':'SD',
+  'Tennessee':'TN','Texas':'TX','Utah':'UT','Vermont':'VT','Virginia':'VA',
+  'Washington':'WA','West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY',
+  // allow DC variants
+  'DC':'DC','D.C.':'DC','Washington DC':'DC','Washington D.C.':'DC',
+};
+
+const toAbbr = (state = '') => STATE_ABBR[state] || state.slice(0, 2).toUpperCase();
+
+const TABS = ['All States', 'East Coast', 'West Coast', 'Midwest', 'South'];
+const PANEL_LIMIT = 6;   // max items in featured panel
+const TICK_MS = 2500;    // auto-rotate interval
+
 const HeroSection = () => {
+  const [temples, setTemples]       = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [activeRegion, setActiveRegion] = useState('All States');
+  const [activeIdx, setActiveIdx]   = useState(0);
+  const timerRef = useRef(null);
+
+  // ── Fetch temples once ───────────────────────────────────────────
+  useEffect(() => {
+    let ignore = false;
+    fetch('/api/temples')
+      .then((r) => r.json())
+      .then((data) => {
+        if (!ignore && Array.isArray(data)) setTemples(data);
+      })
+      .catch(() => {})   // silently fail — hero still renders without the list
+      .finally(() => { if (!ignore) setLoading(false); });
+    return () => { ignore = true; };
+  }, []);
+
+  // ── Filter temples by selected region tab ────────────────────────
+  const filteredTemples = (() => {
+    if (activeRegion === 'All States') return temples.slice(0, PANEL_LIMIT);
+    const abbrs = REGION_STATES[activeRegion] || [];
+    return temples
+      .filter((t) => abbrs.includes(toAbbr(t.state)))
+      .slice(0, PANEL_LIMIT);
+  })();
+
+  // ── Auto-rotate active item ──────────────────────────────────────
+  useEffect(() => {
+    if (filteredTemples.length === 0) return;
+    // Reset index when filter changes
+    setActiveIdx(0);
+    timerRef.current = setInterval(() => {
+      setActiveIdx((i) => (i + 1) % filteredTemples.length);
+    }, TICK_MS);
+    return () => clearInterval(timerRef.current);
+  }, [filteredTemples.length, activeRegion]);
+
+  const handleTabClick = (tab) => {
+    setActiveRegion(tab);
+    setActiveIdx(0);
+  };
+
   return (
     <section className="hero">
       {/* Background image */}
@@ -69,41 +144,51 @@ const HeroSection = () => {
       <div className="hero__featured">
         <p className="hero__featured-label">Featured</p>
         <ul className="hero__featured-list">
-          <li className="hero__featured-item hero__featured-item--active">
-            <span className="hero__featured-dot" />
-            <span className="hero__featured-name">Washington Buddhist Vihara</span>
-            <span className="hero__featured-state">DC</span>
-          </li>
-          <li className="hero__featured-item">
-            <span className="hero__featured-dot" />
-            <span className="hero__featured-name">Blue Lotus Buddhist Temple</span>
-            <span className="hero__featured-state">IL</span>
-          </li>
-          <li className="hero__featured-item">
-            <span className="hero__featured-dot" />
-            <span className="hero__featured-name">Dharma Vijaya Buddhist Vihara</span>
-            <span className="hero__featured-state">CA</span>
-          </li>
-          <li className="hero__featured-item">
-            <span className="hero__featured-dot" />
-            <span className="hero__featured-name">Georgia Buddhist Vihara</span>
-            <span className="hero__featured-state">GA</span>
-          </li>
-          <li className="hero__featured-item">
-            <span className="hero__featured-dot" />
-            <span className="hero__featured-name">Great Lakes Buddhist Vihara</span>
-            <span className="hero__featured-state">MI</span>
-          </li>
+          {loading && (
+            // Skeleton rows while loading
+            Array.from({ length: 4 }).map((_, i) => (
+              <li key={i} className="hero__featured-item hero__featured-item--skeleton">
+                <span className="hero__featured-dot" />
+                <span className="hero__featured-name hero__featured-skeleton-text" />
+                <span className="hero__featured-state hero__featured-skeleton-abbr" />
+              </li>
+            ))
+          )}
+
+          {!loading && filteredTemples.length === 0 && (
+            <li className="hero__featured-item">
+              <span className="hero__featured-name" style={{ opacity: 0.5 }}>
+                No temples in this region
+              </span>
+            </li>
+          )}
+
+          {!loading && filteredTemples.map((temple, i) => (
+            <li
+              key={temple.id}
+              className={`hero__featured-item ${i === activeIdx ? 'hero__featured-item--active' : ''}`}
+              onClick={() => setActiveIdx(i)}
+              style={{ cursor: 'pointer' }}
+            >
+              <span className="hero__featured-dot" />
+              <span className="hero__featured-name">{temple.name}</span>
+              <span className="hero__featured-state">{toAbbr(temple.state)}</span>
+            </li>
+          ))}
         </ul>
       </div>
 
       {/* Region tabs - bottom left */}
       <div className="hero__tabs">
-        <button className="hero__tab hero__tab--active">All States</button>
-        <button className="hero__tab">East Coast</button>
-        <button className="hero__tab">West Coast</button>
-        <button className="hero__tab">Midwest</button>
-        <button className="hero__tab">South</button>
+        {TABS.map((tab) => (
+          <button
+            key={tab}
+            className={`hero__tab ${activeRegion === tab ? 'hero__tab--active' : ''}`}
+            onClick={() => handleTabClick(tab)}
+          >
+            {tab}
+          </button>
+        ))}
       </div>
     </section>
   );
