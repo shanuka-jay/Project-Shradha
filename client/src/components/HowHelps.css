@@ -30,13 +30,32 @@
   color: #c9a050;
 }
 
-.howhelps__sub {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 11px;
-  font-weight: 300;
-  color: #9a8e82;
-  letter-spacing: 0.5px;
+.howhelps__divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 10px;
 }
+
+.howhelps__divider-line {
+  display: block;
+  width: 40px;
+  height: 1px;
+  background: #c9a050;
+  opacity: 0.5;
+}
+
+.howhelps__divider-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #c9a050;
+}
+
+
 
 /* 3-col grid */
 .howhelps__grid {
