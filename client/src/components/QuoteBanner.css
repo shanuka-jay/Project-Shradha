@@ -18,9 +18,13 @@
   font-weight: 300;
   color: #fff;
   line-height: 1.55;
-  margin-bottom: 24px;
+  margin: 0 0 24px 0;       /* reset blockquote default margin */
+  padding: 0;               /* reset blockquote default padding */
+  background: none;         /* kill any inherited background */
+  border: none;             /* kill any browser border-left */
   quotes: none;
 }
+
 
 .quote__divider {
   width: 40px;
