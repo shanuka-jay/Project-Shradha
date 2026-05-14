@@ -37,7 +37,7 @@ export default function Login() {
     } catch (err) {
       // Network-level failure (backend not reachable at all)
       if (err.name === 'TypeError') {
-        setError('Cannot reach the server — make sure the backend is running on port 5000')
+        setError('Cannot reach the server — make sure the backend is running on port 5001')
       } else {
         setError(err.message)
       }
