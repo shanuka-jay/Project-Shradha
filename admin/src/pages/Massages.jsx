@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import './Messages.css'
+import './Massages.css'
 
 /* ── Deterministic avatar colour from name ── */
 const AVATAR_COLORS = [

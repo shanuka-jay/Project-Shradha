@@ -42,17 +42,36 @@ model Temple {
 
 model Monk {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId
+
+  // ── Core identity ────────────────────────────────────────────
   legalName      String
-  displayName    String?
-  ordinationDate String?
+  displayName    String?          // Dharma / display name shown publicly
+  titles         String?          // e.g. "Senior Dhamma Teacher · Pali Scholar"
+  role           String?          // e.g. "Abbot", "Chief Incumbent"
+
+  // ── Profile details (left column on public page) ─────────────
+  dateOfBirth    String?          // Free-text, e.g. "5 January 1920"
+  ordinationDate String?          // Free-text, e.g. "24 June 1954 · Received Upasampada"
   nationality    String?
-  residence      String?
+  residence      String?          // e.g. "Kandy, Sri Lanka"
   languages      String[]
-  biography      String?
-  role           String?
-  profilePhoto   String?
-  socialLinks    Json?
-  contactInfo    String?
+
+  // ── About / Biography section ────────────────────────────────
+  biography      String?          // Full multi-paragraph biography
+  quote          String?          // Pull-quote shown in golden block
+
+  // ── Contact & Enquiries section ──────────────────────────────
+  contactInfo    String?          // Legacy / primary email (backwards compat)
+  email          String?          // Explicit email field
+  templePhone    String?          // Temple office phone
+  address        String?          // Physical address for contact section
+  appointment    String?          // e.g. "By prior arrangement only"
+
+  // ── Photo & Social ───────────────────────────────────────────
+  profilePhoto   String?          // Cloudinary URL
+  socialLinks    Json?            // { website, facebook, youtube, wikipedia, pinterest }
+
+  // ── Relations & meta ─────────────────────────────────────────
   linkedTempleId String?  @db.ObjectId
   temple         Temple?  @relation(fields: [linkedTempleId], references: [id])
   status         String   @default("published")

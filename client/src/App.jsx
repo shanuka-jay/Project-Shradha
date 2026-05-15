@@ -6,6 +6,7 @@ import About from './pages/About'
 import Contact from './pages/Contact'
 import MapPage from './pages/MapPage'
 import TempleDetailsPage from './pages/TempleDetailsPage'
+import Profile from './pages/Profile'
 import './App.css'
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/map" element={<MapPage />} />
           <Route path="/temples/:id" element={<TempleDetailsPage />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
       </div>
       {!isMapPage && <Footer />}

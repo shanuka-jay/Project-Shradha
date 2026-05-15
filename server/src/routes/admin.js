@@ -81,6 +81,17 @@ router.post('/temples', requireAdmin, async (req, res) => {
       images, services,
       lat, lng, status, regionTag, mapVisible
     } = req.body;
+
+    // ── Duplicate check: same name + same state ──
+    const allTemples = await prisma.temple.findMany({ select: { name: true, state: true } });
+    const duplicate = allTemples.find(t =>
+      t.name.trim().toLowerCase() === name.trim().toLowerCase() &&
+      t.state.trim().toLowerCase() === state.trim().toLowerCase()
+    );
+    if (duplicate) {
+      return res.status(409).json({ error: `A temple named "${duplicate.name}" already exists in ${duplicate.state}.` });
+    }
+
     const temple = await prisma.temple.create({
       data: {
         name, state, address, chiefMonk, phone, email,
