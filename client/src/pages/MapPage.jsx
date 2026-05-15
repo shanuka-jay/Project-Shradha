@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import TempleDetails from "../components/TempleDetails.jsx";
 import {
     ComposableMap,
@@ -10,6 +11,7 @@ import {
 } from "react-simple-maps";
 import { geoCentroid, geoDistance } from "d3-geo";
 import { templeData as fallbackTempleData } from "../data/temples.js";
+import { hasTempleCoordinates, normalizeTemple } from "../utils/temple.js";
 import "../pages/MapPage.css";
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json";
@@ -18,47 +20,43 @@ const globeStart = { rotate: [98, -38, 0], scale: 300 };
 const usaFocus = { rotate: [98, -39, 0], scale: 520 };
 const minGlobeScale = 250;
 const maxGlobeScale = 760;
-const fallbackTempleImage =
-    "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=900&q=80";
 
 const regionOptions = ["All", "Northeast", "South", "Midwest", "West"];
 
-const normalizeStateName = (state) => {
-    if (state === "DC" || state === "D.C.") return "District of Columbia";
-    return state || "";
+const getPopupNameLines = (name = "") => {
+    const words = name.split(" ").filter(Boolean);
+    const lines = [];
+
+    words.forEach((word) => {
+        if (lines.length === 0) {
+            lines.push(word);
+            return;
+        }
+
+        const currentLine = lines[lines.length - 1] || "";
+        const nextLine = currentLine ? `${currentLine} ${word}` : word;
+
+        if (nextLine.length <= 22) {
+            lines[lines.length - 1] = nextLine;
+        } else if (lines.length < 2) {
+            lines.push(word);
+        }
+    });
+
+    if (lines.length > 2) {
+        lines.length = 2;
+    }
+
+    const lastLine = lines[lines.length - 1] || "";
+    if (lastLine.length > 24) {
+        lines[lines.length - 1] = `${lastLine.slice(0, 21)}...`;
+    }
+
+    return lines.length ? lines : [name];
 };
-
-const normalizeTemple = (temple) => {
-    const lat = temple.lat ?? temple.location?.lat;
-    const lng = temple.lng ?? temple.location?.lng;
-    const gallery = temple.galleryImages?.length
-        ? temple.galleryImages
-        : temple.images?.length
-            ? temple.images
-            : temple.mainImage
-                ? [temple.mainImage]
-                : [];
-
-    return {
-        ...temple,
-        id: temple.id || temple._id,
-        state: normalizeStateName(temple.state),
-        region: temple.regionTag || temple.region || "Other",
-        contact: temple.phone || temple.contact || "",
-        description: temple.overview || temple.description || "",
-        imageUrl: temple.mainImage || temple.imageUrl || gallery[0] || fallbackTempleImage,
-        gallery,
-        monkImage: temple.chiefMonkImage || temple.monkImage || temple.mainImage || gallery[0] || fallbackTempleImage,
-        lat: lat === null || lat === undefined || lat === "" ? null : Number(lat),
-        lng: lng === null || lng === undefined || lng === "" ? null : Number(lng),
-    };
-};
-
-const hasTempleCoordinates = (temple) => (
-    Number.isFinite(temple.lat) && Number.isFinite(temple.lng)
-);
 
 const Map = () => {
+    const navigate = useNavigate();
     const [selectedState, setSelectedState] = useState(null);
     const [viewMode, setViewMode] = useState("map");
     const [selectedTemple, setSelectedTemple] = useState(null);
@@ -255,6 +253,12 @@ const Map = () => {
         event.stopPropagation();
         setDragStart(null);
         handleTempleClick(temple);
+    };
+
+    const openTempleDetailsPage = (event, temple) => {
+        event.preventDefault();
+        event.stopPropagation();
+        navigate(`/temples/${temple.id}`);
     };
 
     const handleCountryClick = (geo) => {
@@ -634,6 +638,71 @@ const Map = () => {
                                 })
                             }
                         </Geographies>
+
+                        {selectedTemple &&
+                            hasTempleCoordinates(selectedTemple) &&
+                            isCoordinateVisible([selectedTemple.lng, selectedTemple.lat]) && (
+                                <Marker
+                                    key={`${selectedTemple.id}-popup`}
+                                    coordinates={[selectedTemple.lng, selectedTemple.lat]}
+                                >
+                                    <g
+                                        className="temple-map-popup"
+                                        role="button"
+                                        tabIndex="0"
+                                        aria-label={`Open details page for ${selectedTemple.name}`}
+                                        onPointerDown={(event) => {
+                                            event.stopPropagation();
+                                        }}
+                                        onClick={(event) => openTempleDetailsPage(event, selectedTemple)}
+                                        onKeyDown={(event) => {
+                                            if (event.key === "Enter" || event.key === " ") {
+                                                openTempleDetailsPage(event, selectedTemple);
+                                            }
+                                        }}
+                                    >
+                                        <rect
+                                            className="temple-popup-card"
+                                            x={-82}
+                                            y={-128}
+                                            width={164}
+                                            height={98}
+                                            rx={8}
+                                        />
+                                        <path
+                                            className="temple-popup-pointer"
+                                            d="M-10,-31 L10,-31 L0,-18 Z"
+                                        />
+                                        <image
+                                            href={selectedTemple.imageUrl}
+                                            x={-73}
+                                            y={-119}
+                                            width={146}
+                                            height={58}
+                                            preserveAspectRatio="xMidYMid slice"
+                                        />
+                                        <rect
+                                            className="temple-popup-image-border"
+                                            x={-73}
+                                            y={-119}
+                                            width={146}
+                                            height={58}
+                                            rx={5}
+                                        />
+                                        {getPopupNameLines(selectedTemple.name).map((line, index) => (
+                                            <text
+                                                key={`${selectedTemple.id}-name-${index}`}
+                                                textAnchor="middle"
+                                                x={0}
+                                                y={-48 + index * 12}
+                                                className="temple-popup-title"
+                                            >
+                                                {line}
+                                            </text>
+                                        ))}
+                                    </g>
+                                </Marker>
+                            )}
                     </ComposableMap>
 
                     <div
