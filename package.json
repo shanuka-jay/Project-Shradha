@@ -1,0 +1,15 @@
+{
+  "name": "saddha-temple-map",
+  "version": "2.0.0",
+  "description": "Saddha Temple Map — Public site + Admin panel, unified",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install --prefix server && npm install --prefix client && npm install --prefix admin",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "dev:admin": "npm run dev --prefix admin",
+    "db:push": "npm run db:push --prefix server",
+    "db:studio": "npm run db:studio --prefix server",
+    "seed:admin": "npm run seed:admin --prefix server"
+  }
+}

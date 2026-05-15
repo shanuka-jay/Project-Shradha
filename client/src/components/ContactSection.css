@@ -1,0 +1,275 @@
+/* ===== CONTACT SECTION ===== */
+.contact {
+  background: #fbfaf8;
+  padding: 80px 0 100px;
+}
+
+.contact__inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 80px;
+}
+
+.contact__header {
+  margin-bottom: 44px;
+}
+
+.contact__heading {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(30px, 3.2vw, 46px);
+  font-weight: 300;
+  color: #1a1205;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.contact__heading em {
+  font-style: italic;
+  color: #c9a050;
+}
+
+/* 2-col layout */
+.contact__body {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 36px;
+  align-items: start;
+}
+
+/* ---- Connect Card ---- */
+.contact__card {
+  position: relative;
+  min-height: 580px;
+  border-radius: 6px;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: flex-end;
+}
+
+.contact__card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 5, 0, 0.25) 0%,
+    rgba(10, 5, 0, 0.85) 100%
+  );
+}
+
+.contact__card-content {
+  position: relative;
+  z-index: 1;
+  padding: 28px 26px;
+  color: #fff;
+  width: 100%;
+}
+
+.contact__card-content h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 30px;
+  font-weight: 300;
+  color: #fff;
+  margin-bottom: 10px;
+  line-height: 1.15;
+}
+
+.contact__card-content h3 span {
+  color: #c9a050;
+  font-style: italic;
+}
+
+.contact__card-content p {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 300;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.65);
+  margin-bottom: 18px;
+}
+
+.contact__info {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-bottom: 18px;
+}
+
+.contact__info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.62);
+  line-height: 1.5;
+}
+
+.contact__info-icon {
+  font-size: 11px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.contact__social {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.contact__social-link {
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.55);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.contact__social-link:hover {
+  border-color: #c9a050;
+  color: #c9a050;
+}
+
+/* ---- Form ---- */
+.contact__form-wrap {
+  background: #fff;
+  border: 1px solid #ede7dc;
+  border-radius: 6px;
+  padding: 40px 36px;
+}
+
+.contact__form-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 300;
+  color: #1a1205;
+  margin-bottom: 4px;
+}
+
+.contact__form-sub {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 300;
+  color: #9a8e82;
+  margin-bottom: 24px;
+}
+
+.contact__form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.contact__form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.contact__form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.contact__form-group label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  color: #4a3220;
+  letter-spacing: 0.2px;
+}
+
+.contact__form-group input,
+.contact__form-group textarea {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 300;
+  color: #1a1205;
+  background: #faf9f7;
+  border: 1px solid #e4ddd3;
+  border-radius: 3px;
+  padding: 10px 13px;
+  outline: none;
+  transition: border-color 0.2s;
+  resize: none;
+}
+
+.contact__form-group input::placeholder,
+.contact__form-group textarea::placeholder {
+  color: #c4bbb0;
+}
+
+.contact__form-group input:focus,
+.contact__form-group textarea:focus {
+  border-color: #c9a050;
+  background: #fff;
+}
+
+.contact__submit {
+  width: 100%;
+  background: #c9a050;
+  color: #1c120a;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 15px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.contact__submit:hover {
+  background: #b38b41;
+}
+
+.contact__submit:disabled {
+  background: #d4bc8a;
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+/* ---- Feedback banners ---- */
+.contact__feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 4px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.contact__feedback--success {
+  background: #f0faf2;
+  border: 1px solid #7ecb91;
+  color: #1e6635;
+}
+
+.contact__feedback--error {
+  background: #fff5f5;
+  border: 1px solid #f5a5a5;
+  color: #9b2222;
+}
+

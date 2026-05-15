@@ -7,9 +7,7 @@ function Footer() {
       <div className="footer-content">
         <div className="footer-col brand-col">
           <Link to="/" className="footer-logo">Sadd<span>ha</span>.org</Link>
-          <p className="footer-desc">
-            A sacred digital directory of Sri Lankan<br/>Buddhist Temples across the United<br/>States.
-          </p>
+          <p className="footer-desc">A sacred digital directory of Sri Lankan<br/>Buddhist Temples across the United<br/>States.</p>
         </div>
         <div className="footer-col">
           <h4>PAGES</h4>
@@ -40,7 +38,7 @@ function Footer() {
       </div>
       <div className="footer-bottom">
         <p>© 2025 Saddha.org — All Rights Reserved</p>
-        <p>Designed & Built by Fuchsius Team</p>
+        <p>Designed & Built by Fuchsius</p>
       </div>
     </footer>
   )
