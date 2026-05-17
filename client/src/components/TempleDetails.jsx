@@ -1,13 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import "./TempleDetails.css"
 
-const DEFAULT_PROGRAMS = [
-    { name: "Sunday Dhamma Sermon", time: "Every Sunday", icon: "sun" },
-    { name: "Meditation Sessions", time: "Weekly", icon: "users" },
-    { name: "Poya Day Observance", time: "Monthly", icon: "moon" },
-    { name: "Dhamma School", time: "Sunday", icon: "book-open" },
-];
-
 const SERVICE_ICON_LABELS = {
     sun: "Dhamma service",
     moon: "Poya day",
@@ -146,10 +139,24 @@ const formatEventTime = (dateTime, endDateTime) => {
     return `Until ${end.toLocaleTimeString("en-US", timeOptions)}`;
 };
 
+const getPhoneHref = (phone) => {
+    const normalizedPhone = String(phone || "").trim();
+    const callablePhone = normalizedPhone.replace(/[^\d+]/g, "");
+
+    return callablePhone ? `tel:${callablePhone}` : "";
+};
+
+const getTempleShareUrl = () => {
+    if (typeof window === "undefined") return "";
+
+    return window.location.href;
+};
+
 const TempleDetails = ({ temple, onBack }) => {
     const [events, setEvents] = useState([]);
     const [eventsLoading, setEventsLoading] = useState(false);
     const [eventsError, setEventsError] = useState("");
+    const [actionMessage, setActionMessage] = useState("");
 
     useEffect(() => {
         if (!temple?.id) {
@@ -217,7 +224,60 @@ const TempleDetails = ({ temple, onBack }) => {
     const templePrograms = (temple.services || [])
         .map(normalizeService)
         .filter((service) => service?.name?.trim());
-    const programs = templePrograms.length > 0 ? templePrograms : DEFAULT_PROGRAMS;
+    const phoneHref = getPhoneHref(temple.contact);
+    const emailAddress = String(temple.email || "").trim();
+
+    const handleShare = async () => {
+        const shareUrl = getTempleShareUrl();
+        const shareData = {
+            title: temple.name,
+            text: `View ${temple.name} on Saddha.org`,
+            url: shareUrl,
+        };
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+                setActionMessage("");
+                return;
+            }
+
+            if (navigator.clipboard && shareUrl) {
+                await navigator.clipboard.writeText(shareUrl);
+                setActionMessage("Temple page link copied to clipboard.");
+                return;
+            }
+
+            setActionMessage("Sharing is unavailable in this browser.");
+        } catch (error) {
+            if (error.name !== "AbortError") {
+                setActionMessage("Sharing is unavailable right now.");
+            }
+        }
+    };
+
+    const handleContactTemple = () => {
+        if (!phoneHref) {
+            setActionMessage("No contact number exists for this temple.");
+            return;
+        }
+
+        setActionMessage("");
+        window.location.href = phoneHref;
+    };
+
+    const handleSendMessage = () => {
+        if (!emailAddress) {
+            setActionMessage("No email address exists for this temple.");
+            return;
+        }
+
+        const subject = encodeURIComponent(`Inquiry about ${temple.name}`);
+        const body = encodeURIComponent(`Hello,\n\nI would like to contact ${temple.name}.\n\nThank you.`);
+
+        setActionMessage("");
+        window.location.href = `mailto:${emailAddress}?subject=${subject}&body=${body}`;
+    };
 
     return (
         <main className="temple-details-page">
@@ -277,13 +337,17 @@ const TempleDetails = ({ temple, onBack }) => {
 
                     </a>
 
-                    <button>Share</button>
+                    <button type="button" onClick={handleShare}>Share</button>
 
-                    <button>Contact Temple</button>
+                    <button type="button" onClick={handleContactTemple}>Contact Temple</button>
 
                 </div>
 
             </section>
+
+            {actionMessage && (
+                <p className="details-action-message" role="status">{actionMessage}</p>
+            )}
 
             <section className="details-layout">
 
@@ -363,13 +427,11 @@ const TempleDetails = ({ temple, onBack }) => {
 
                         <blockquote>
 
-                            A sacred place established to support Buddhist practice,
-
-                            meditation, cultural values, and community service.
+                            <p>{temple.history}</p>
 
                         </blockquote>
 
-                        <p>{temple.history}</p>
+
 
                     </section>
 
@@ -467,7 +529,9 @@ const TempleDetails = ({ temple, onBack }) => {
 
                         </div>
 
-                        <button className="primary-btn">Send Message</button>
+                        <button className="primary-btn" type="button" onClick={handleSendMessage}>
+                            Send Message
+                        </button>
 
                     </div>
 
@@ -539,19 +603,21 @@ const TempleDetails = ({ temple, onBack }) => {
 
                         <h3>Dhamma Programs</h3>
 
-                        <ul className="program-list">
-
-                            {programs.map((program, index) => (
-                                <li key={`${program.name}-${index}`}>
-                                    <ServiceIcon icon={program.icon} />
-                                    <div>
-                                        <strong>{program.name}</strong>
-                                        {program.time && <span>{program.time}</span>}
-                                    </div>
-                                </li>
-                            ))}
-
-                        </ul>
+                        {templePrograms.length > 0 ? (
+                            <ul className="program-list">
+                                {templePrograms.map((program, index) => (
+                                    <li key={`${program.name}-${index}`}>
+                                        <ServiceIcon icon={program.icon} />
+                                        <div>
+                                            <strong>{program.name}</strong>
+                                            {program.time && <span>{program.time}</span>}
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="program-empty">No programmes have been added for this temple yet.</p>
+                        )}
 
                     </div>
 
