@@ -236,10 +236,6 @@ const TempleDetails = ({ temple, onBack }) => {
             <section className="hero-gallery">
                 <div className="hero-image-large">
                     <img src={temple.imageUrl} alt={temple.name} />
-                    <div className="hero-overlay">
-                        <h1>{temple.name}</h1>
-                        <p>{temple.address}</p>
-                    </div>
                 </div>
 
                 <div className="hero-image">
@@ -249,6 +245,11 @@ const TempleDetails = ({ temple, onBack }) => {
                 <div className={"hero-image"}>
                     <img src={temple.gallery?.[1] || temple.imageUrl} alt="Temple monk" />
                 </div>
+            </section>
+
+            <section className="hero-summary">
+                <h1>{temple.name}</h1>
+                <p>{temple.address}</p>
             </section>
 
             <section className="details-tabs">
