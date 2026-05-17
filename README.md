@@ -120,7 +120,7 @@ npm install
 npm run dev
 ```
 
-Client runs at **http://localhost:5173**
+Client runs at **http://localhost:3000**
 
 ---
 
@@ -132,7 +132,7 @@ npm install
 npm run dev
 ```
 
-Admin panel runs at **http://localhost:5174**
+Admin panel runs at **http://localhost:5173**
 
 ---
 
