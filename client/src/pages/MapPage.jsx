@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import TempleDetails from "../components/TempleDetails.jsx";
 import {
     ComposableMap,
     Geographies,
@@ -58,7 +57,6 @@ const getPopupNameLines = (name = "") => {
 const Map = () => {
     const navigate = useNavigate();
     const [selectedState, setSelectedState] = useState(null);
-    const [viewMode, setViewMode] = useState("map");
     const [selectedTemple, setSelectedTemple] = useState(null);
     const [templeData, setTempleData] = useState([]);
     const [templesLoading, setTemplesLoading] = useState(true);
@@ -223,7 +221,6 @@ const Map = () => {
 
         setSelectedState(stateName);
         setSelectedTemple(null);
-        setViewMode("map");
 
         const firstTemple = templeData.find((temple) => temple.state === stateName);
 
@@ -245,7 +242,6 @@ const Map = () => {
         if (hasTempleCoordinates(temple)) {
             focusGlobe([temple.lng, temple.lat], 700);
         }
-        setViewMode("map");
     };
 
     const handleMapTempleClick = (event, temple) => {
@@ -325,7 +321,6 @@ const Map = () => {
                                 onClick={() => {
                                     setSelectedState(item.state);
                                     setSelectedTemple(null);
-                                    setViewMode("map");
                                     if (item.temples[0] && hasTempleCoordinates(item.temples[0])) {
                                         focusGlobe([item.temples[0].lng, item.temples[0].lat], 650);
                                     }
@@ -828,7 +823,9 @@ const Map = () => {
                                             Get Directions
                                         </a>
 
-                                        <button onClick={() => setViewMode("details")}>View Details</button>
+                                        <button onClick={(event) => openTempleDetailsPage(event, selectedTemple)}>
+                                            View Details
+                                        </button>
                                     </div>
                                 </div>
                             </>
@@ -846,21 +843,6 @@ const Map = () => {
                 )}
             </aside>
 
-            {viewMode === "details" && selectedTemple && (
-                <div className="temple-details-modal" role="dialog" aria-modal="true">
-                    <button
-                        className="modal-backdrop"
-                        aria-label="Close temple details"
-                        onClick={() => setViewMode("map")}
-                    />
-                    <div className="temple-details-modal-content">
-                        <TempleDetails
-                            temple={selectedTemple}
-                            onBack={() => setViewMode("map")}
-                        />
-                    </div>
-                </div>
-            )}
         </main>
     );
 };
