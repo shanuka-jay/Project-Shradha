@@ -12,10 +12,11 @@ import './App.css'
 function App() {
   const location = useLocation()
   const isMapPage = location.pathname === '/map'
+  const isTempleDetailsPage = location.pathname.startsWith('/temples/')
 
   return (
     <>
-      <Navbar />
+      {!isTempleDetailsPage && <Navbar />}
       <div className="main-content">
         <Routes>
           <Route path="/" element={<Home />} />
@@ -26,7 +27,7 @@ function App() {
           <Route path="/profile" element={<Profile />} />
         </Routes>
       </div>
-      {!isMapPage && <Footer />}
+      {!isMapPage && !isTempleDetailsPage && <Footer />}
     </>
   )
 }
