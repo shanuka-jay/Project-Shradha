@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom';
 import './MonkProfile.css';
 
 const Icon = ({ name, size = 18, color = 'currentColor' }) => {
@@ -76,12 +76,29 @@ const Icon = ({ name, size = 18, color = 'currentColor' }) => {
 const MonkProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const revealRefs = useRef([]);
   revealRefs.current = [];
 
   const [monk, setMonk] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // ── Admin preview banner ──────────────────────────────────────────────────
+  // When admin clicks "View Page", the URL includes ?preview=admin
+  // This shows a banner at the top so admin can get back easily
+  const isAdminPreview = searchParams.get('preview') === 'admin';
+  const adminUrl = import.meta.env.VITE_ADMIN_URL || 'http://localhost:5173';
+
+  function handleBackToAdmin() {
+    // Try to close the tab (works if it was opened by window.open)
+    // Falls back to navigating directly to the admin monks page
+    window.close();
+    setTimeout(() => {
+      window.location.href = `${adminUrl}/monks`;
+    }, 300);
+  }
+  // ─────────────────────────────────────────────────────────────────────────
 
   const addToRefs = (el) => {
     if (el && !revealRefs.current.includes(el)) revealRefs.current.push(el);
@@ -139,6 +156,50 @@ const MonkProfile = () => {
 
   return (
     <div className="profile-page">
+
+      {/* ── ADMIN PREVIEW BANNER ─────────────────────────────────────────── */}
+      {/* Only visible when opened from admin via ?preview=admin in URL      */}
+      {isAdminPreview && (
+        <div style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 9999,
+          background: '#1e293b',
+          color: '#f8fafc',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0.6rem 1.5rem',
+          fontSize: '0.82rem',
+          fontWeight: 500,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
+          gap: '1rem',
+        }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '1rem' }}>👁</span>
+            Admin Preview — this is how the public sees this page
+          </span>
+          <button
+            onClick={handleBackToAdmin}
+            style={{
+              background: '#f59e0b',
+              color: '#1c1917',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '0.38rem 1.1rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              fontSize: '0.82rem',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+            }}
+          >
+            ← Back to Admin
+          </button>
+        </div>
+      )}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+
       {/* ── HERO BANNER ── */}
       <section className="profile-hero">
         <img src="/src/assets/images/ab.jpg" alt="Banner" className="hero-banner-img" />
@@ -330,7 +391,7 @@ const MonkProfile = () => {
           {(monk.email || monk.templePhone || monk.address || monk.appointment) && (
             <div className="profile-card reveal" ref={addToRefs} style={{ marginTop: '24px' }}>
               <span className="section-label">— GET IN TOUCH</span>
-              <h2 className="section-heading">Contact <span className="gold-italic">& Enquiries</span></h2>
+              <h2 className="section-heading">Contact <span className="gold-italic">&amp; Enquiries</span></h2>
               <p className="section-subheading">For Dhamma guidance, retreat bookings or media enquiries</p>
 
               <div className="contact-grid">
