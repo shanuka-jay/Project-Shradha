@@ -535,33 +535,6 @@
   justify-content: center;
 }
 
-.temple-details-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 1200;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-}
-
-.modal-backdrop {
-  position: absolute;
-  inset: 0;
-  border: 0;
-  background: rgba(32, 24, 16, 0.58);
-  cursor: pointer;
-}
-
-.temple-details-modal-content {
-  position: relative;
-  z-index: 1;
-  width: min(1120px, 100%);
-  max-height: min(860px, calc(100vh - 48px));
-  overflow-y: auto;
-  background: #fbfaf7;
-  box-shadow: 0 26px 80px rgba(18, 12, 6, 0.36);
-}
-
 @media (max-width: 1180px) {
   .temple-map-page {
     grid-template-columns: 280px minmax(0, 1fr);

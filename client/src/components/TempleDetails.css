@@ -138,6 +138,16 @@
     color: white;
 }
 
+.details-action-message {
+    margin: 0;
+    padding: 13px 42px;
+    background: #fff6dd;
+    border-bottom: 1px solid #ead29a;
+    color: #76551a;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
 .details-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 340px;
@@ -398,6 +408,15 @@ blockquote {
 .program-list span {
     font-size: 12px;
     color: #7a6a55;
+}
+
+.program-empty {
+    margin: 0;
+    background: #fff;
+    color: #7a6a55;
+    font-size: 13px;
+    line-height: 1.6;
+    padding: 14px;
 }
 
 .program-icon {
