@@ -16,7 +16,7 @@ function App() {
 
   return (
     <>
-      {!isTempleDetailsPage && <Navbar />}
+      {<Navbar />}
       <div className="main-content">
         <Routes>
           <Route path="/" element={<Home />} />
@@ -27,7 +27,7 @@ function App() {
           <Route path="/profile" element={<Profile />} />
         </Routes>
       </div>
-      {!isMapPage && !isTempleDetailsPage && <Footer />}
+      {<Footer />}
     </>
   )
 }
