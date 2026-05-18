@@ -323,6 +323,50 @@
   box-shadow: 0 0 0 3px rgba(200, 135, 62, 0.15);
 }
 
+.lp-password-wrap {
+  position: relative;
+}
+
+.lp-password-wrap input {
+  padding-right: 2.75rem;
+}
+
+.lp-password-toggle {
+  position: absolute;
+  right: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #7a5c38;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.lp-password-toggle svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lp-password-toggle:hover {
+  background: #f2ede6;
+  color: #3d2a11;
+}
+
+.lp-password-toggle:focus-visible {
+  outline: 2px solid rgba(200, 135, 62, 0.45);
+  outline-offset: 1px;
+}
+
 /* ── Remember me ── */
 .lp-remember {
   display: flex;
