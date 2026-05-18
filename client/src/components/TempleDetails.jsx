@@ -337,9 +337,9 @@ const TempleDetails = ({ temple, onBack }) => {
 
                     </a>
 
-                    <button type="button" onClick={handleShare}>Share</button>
+                    <button  type="button" onClick={handleShare}>Share</button>
 
-                    <button type="button" onClick={handleContactTemple}>Contact Temple</button>
+                    <button  type="button" onClick={handleContactTemple}>Contact Temple</button>
 
                 </div>
 

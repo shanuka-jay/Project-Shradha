@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     ComposableMap,
@@ -19,6 +19,7 @@ const globeStart = { rotate: [98, -38, 0], scale: 300 };
 const usaFocus = { rotate: [98, -39, 0], scale: 520 };
 const minGlobeScale = 250;
 const maxGlobeScale = 760;
+const globeFocusDuration = 760;
 
 const regionOptions = ["All", "Northeast", "South", "Midwest", "West"];
 
@@ -54,6 +55,21 @@ const getPopupNameLines = (name = "") => {
     return lines.length ? lines : [name];
 };
 
+const easeInOutCubic = (progress) => (
+    progress < 0.5
+        ? 4 * progress * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 3) / 2
+);
+
+const getShortestRotation = (from, to) => {
+    let delta = to - from;
+
+    while (delta > 180) delta -= 360;
+    while (delta < -180) delta += 360;
+
+    return from + delta;
+};
+
 const Map = () => {
     const navigate = useNavigate();
     const [selectedState, setSelectedState] = useState(null);
@@ -67,6 +83,25 @@ const Map = () => {
     const [globeRotate, setGlobeRotate] = useState(globeStart.rotate);
     const [globeScale, setGlobeScale] = useState(globeStart.scale);
     const [dragStart, setDragStart] = useState(null);
+    const globeRotateRef = useRef(globeStart.rotate);
+    const globeScaleRef = useRef(globeStart.scale);
+    const focusAnimationRef = useRef(null);
+
+    useEffect(() => {
+        globeRotateRef.current = globeRotate;
+    }, [globeRotate]);
+
+    useEffect(() => {
+        globeScaleRef.current = globeScale;
+    }, [globeScale]);
+
+    useEffect(() => {
+        return () => {
+            if (focusAnimationRef.current) {
+                cancelAnimationFrame(focusAnimationRef.current);
+            }
+        };
+    }, []);
 
     useEffect(() => {
         let ignore = false;
@@ -155,16 +190,53 @@ const Map = () => {
         );
     }, [selectedState, templeData]);
 
-    const focusGlobe = (coordinates, scale = usaFocus.scale) => {
+    const focusGlobe = (coordinates, scale = usaFocus.scale, duration = globeFocusDuration) => {
         if (!coordinates.every(Number.isFinite)) return;
 
         const [lng, lat] = coordinates;
+        const startRotate = globeRotateRef.current;
+        const startScale = globeScaleRef.current;
+        const targetRotate = [
+            getShortestRotation(startRotate[0], -lng),
+            Math.max(-80, Math.min(80, -lat)),
+            0,
+        ];
+        const targetScale = Math.min(maxGlobeScale, Math.max(minGlobeScale, scale));
+        const startTime = performance.now();
 
-        setGlobeRotate([-lng, -lat, 0]);
-        setGlobeScale(scale);
+        if (focusAnimationRef.current) {
+            cancelAnimationFrame(focusAnimationRef.current);
+        }
+
+        const animate = (currentTime) => {
+            const progress = Math.min(1, (currentTime - startTime) / duration);
+            const easedProgress = easeInOutCubic(progress);
+            const nextRotate = startRotate.map((value, index) => (
+                value + (targetRotate[index] - value) * easedProgress
+            ));
+            const nextScale = startScale + (targetScale - startScale) * easedProgress;
+
+            setGlobeRotate(nextRotate);
+            setGlobeScale(nextScale);
+
+            if (progress < 1) {
+                focusAnimationRef.current = requestAnimationFrame(animate);
+            } else {
+                setGlobeRotate(targetRotate);
+                setGlobeScale(targetScale);
+                focusAnimationRef.current = null;
+            }
+        };
+
+        focusAnimationRef.current = requestAnimationFrame(animate);
     };
 
     const zoomGlobe = (direction) => {
+        if (focusAnimationRef.current) {
+            cancelAnimationFrame(focusAnimationRef.current);
+            focusAnimationRef.current = null;
+        }
+
         setGlobeScale((currentScale) => {
             const nextScale = currentScale + direction * 80;
             return Math.min(maxGlobeScale, Math.max(minGlobeScale, nextScale));
@@ -177,6 +249,11 @@ const Map = () => {
     };
 
     const handleGlobePointerDown = (event) => {
+        if (focusAnimationRef.current) {
+            cancelAnimationFrame(focusAnimationRef.current);
+            focusAnimationRef.current = null;
+        }
+
         event.currentTarget.setPointerCapture(event.pointerId);
         setDragStart({
             x: event.clientX,
@@ -330,17 +407,21 @@ const Map = () => {
                                 <span className="count-badge">{item.count}</span>
                             </button>
 
-                            {selectedState === item.state &&
-                                item.temples.map((temple) => (
-                                    <button
-                                        key={temple.id}
-                                        className="temple-sub-row"
-                                        onClick={() => handleTempleClick(temple)}
-                                    >
-                                        <span className="dot"></span>
-                                        <span>{temple.name}</span>
-                                    </button>
-                                ))}
+                            {selectedState === item.state && (
+                                <div className="state-temple-dropdown" key={`${item.state}-temples`}>
+                                    {item.temples.map((temple, index) => (
+                                        <button
+                                            key={temple.id}
+                                            className="temple-sub-row"
+                                            style={{ "--row-delay": `${Math.min(index * 0.035, 0.28)}s` }}
+                                            onClick={() => handleTempleClick(temple)}
+                                        >
+                                            <span className="dot"></span>
+                                            <span>{temple.name}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -732,18 +813,19 @@ const Map = () => {
                             ×
                         </button>
 
-                        <div className="state-temple-panel">
+                        <div className="state-temple-panel" key={`${selectedState}-panel`}>
                             <p className="state-label">{selectedState}</p>
                             <h2>Temples in {selectedState}</h2>
 
                             {filteredTemples.length > 0 ? (
                                 <div className="right-temple-list">
-                                    {filteredTemples.map((temple) => (
+                                    {filteredTemples.map((temple, index) => (
                                         <button
                                             key={temple.id}
                                             className={`right-temple-row ${
                                                 selectedTemple?.id === temple.id ? "active" : ""
                                             }`}
+                                            style={{ "--row-delay": `${Math.min(index * 0.035, 0.28)}s` }}
                                             onClick={() => handleTempleClick(temple)}
                                         >
                                             <span className="dot"></span>
@@ -769,7 +851,7 @@ const Map = () => {
                                     className="details-image"
                                 />
 
-                                <div className="details-content">
+                                <div className="details-content" key={`${selectedTemple.id}-details`}>
                                     <p className="state-label">{selectedTemple.state}</p>
                                     <h2>{selectedTemple.name}</h2>
 
