@@ -1,7 +1,7 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "Saddha Temple Map API - Prisma + MongoDB",
+  "description": "Saddha Temple Map API - Prisma + SQLite",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
@@ -9,12 +9,11 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "generate": "prisma generate",
-    "seed:admin": "node src/scripts/seedAdmin.js"
+    "seed:admin": "node scripts/seedAdmin.js"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",
     "bcryptjs": "^2.4.3",
-    "cloudinary": "^2.4.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
