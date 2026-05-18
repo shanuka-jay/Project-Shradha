@@ -1,38 +1,5 @@
-.home {
-  min-height: calc(100vh - 60px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #c19b6c22, #f5a62322);
-}
-
-.hero {
-  text-align: center;
-  padding: 2rem;
-}
-
-.hero h1 {
-  font-size: 2.5rem;
-  color: #c19b6c;
-  margin-bottom: 1rem;
-}
-
-.hero p {
-  font-size: 1.2rem;
-  color: #555;
-  margin-bottom: 2rem;
-}
-
-.btn-primary {
-  background-color: #c19b6c;
-  color: white;
-  padding: 0.75rem 2rem;
-  border-radius: 8px;
-  text-decoration: none;
-  font-size: 1rem;
-  transition: background 0.2s;
-}
-
-.btn-primary:hover {
-  background-color: #5e1f6e;
+/* ===== HOME PAGE ===== */
+.home-page {
+  min-height: 100vh;
+  background-color: #fbfaf8;
 }

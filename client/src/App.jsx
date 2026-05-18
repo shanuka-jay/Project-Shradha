@@ -1,25 +1,33 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Home from './pages/Home'
 import About from './pages/About'
 import Contact from './pages/Contact'
 import MapPage from './pages/MapPage'
+import TempleDetailsPage from './pages/TempleDetailsPage'
+import MonkProfile from './pages/MonkProfile'
 import './App.css'
 
 function App() {
+  const location = useLocation()
+  const isMapPage = location.pathname === '/map'
+  const isMonkProfile = location.pathname.startsWith('/monks/')
+
   return (
     <>
-      <Navbar />
+      {<Navbar />}
       <div className="main-content">
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/map" element={<MapPage />} />
+          <Route path="/"            element={<Home />} />
+          <Route path="/about"       element={<About />} />
+          <Route path="/contact"     element={<Contact />} />
+          <Route path="/map"         element={<MapPage />} />
+          <Route path="/temples/:id" element={<TempleDetailsPage />} />
+          <Route path="/monks/:id"   element={<MonkProfile />} />
         </Routes>
       </div>
-      <Footer />
+      {<Footer />}
     </>
   )
 }
