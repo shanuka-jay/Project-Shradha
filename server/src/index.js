@@ -7,6 +7,7 @@ const templeRoutes = require('./routes/temples');
 const contactRoutes = require('./routes/contact');
 const adminRoutes = require('./routes/admin');
 const monkRoutes = require('./routes/monks');
+const publicMonkRoutes = require('./routes/publicMonks');
 const eventRoutes = require('./routes/events');
 const mediaRoutes = require('./routes/media');
 const settingsRoutes = require('./routes/settings');
@@ -26,14 +27,17 @@ async function main() {
     process.exit(1);
   }
 }
+
 main();
 
-// Public routes
+// ── Public routes ──────────────────────────────────────────────
 app.use('/api/temples', templeRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/events', require('./routes/publicEvents'));
+app.use('/api/monks', publicMonkRoutes);   // ← public monk listing + profiles
+app.use('/api/media', require('./routes/publicMedia')); // ← public media listing
 
-// Admin routes
+// ── Admin routes ───────────────────────────────────────────────
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin/monks', monkRoutes);
 app.use('/api/admin/events', eventRoutes);
@@ -42,7 +46,7 @@ app.use('/api/admin/settings', settingsRoutes);
 app.use('/api/admin/map', mapRoutes);
 
 app.get('/', (req, res) => {
-  res.json({ message: 'Saddha Temple Map API is running', version: '2.0.0' });
+  res.json({ message: 'Saddha Temple Map API is running', version: '2.1.0' });
 });
 
 process.on('SIGINT', async () => {
@@ -51,6 +55,7 @@ process.on('SIGINT', async () => {
 });
 
 const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
