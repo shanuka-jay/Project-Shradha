@@ -16,7 +16,7 @@ function App() {
 
   return (
     <>
-      {!isMonkProfile && <Navbar />}
+      {<Navbar />}
       <div className="main-content">
         <Routes>
           <Route path="/"            element={<Home />} />
@@ -27,7 +27,7 @@ function App() {
           <Route path="/monks/:id"   element={<MonkProfile />} />
         </Routes>
       </div>
-      {!isMapPage && <Footer />}
+      {<Footer />}
     </>
   )
 }
