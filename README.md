@@ -154,6 +154,12 @@ OPENCAGE_KEY=your_opencage_api_key
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
+
+# Admin password reset email (Brevo Transactional API)
+ADMIN_APP_URL=http://localhost:5173
+BREVO_API_KEY=xkeysib-your_brevo_api_key
+BREVO_SENDER_EMAIL=no-reply@saddha.org
+BREVO_SENDER_NAME=Saddha.org Admin
 ```
 
 ---
@@ -178,6 +184,8 @@ CLOUDINARY_API_SECRET=your_api_secret
 | Method | Endpoint                              | Description                    |
 |--------|---------------------------------------|--------------------------------|
 | POST   | /api/admin/login                      | Admin login → returns JWT      |
+| POST   | /api/admin/forgot-password            | Generate admin reset link      |
+| POST   | /api/admin/reset-password             | Reset admin password by token  |
 | GET    | /api/admin/me                         | Current admin profile          |
 | GET    | /api/admin/stats                      | Dashboard stats                |
 | GET    | /api/admin/temples                    | List temples                   |

@@ -1,20 +1,61 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import ForgotPassword from '../components/ForgotPassword'
 import { useAuth } from '../context/AuthContext'
 import './Login.css'
 
 export default function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const urlResetToken = searchParams.get('resetToken') || ''
   const [username, setUsername] = useState('')
-  const [password, setPassword]   = useState('')
-  const [remember, setRemember]   = useState(false)
-  const [error, setError]         = useState('')
-  const [loading, setLoading]     = useState(false)
+  const [password, setPassword] = useState('')
+  const [remember, setRemember] = useState(false)
+  const [mode, setMode] = useState(urlResetToken ? 'reset' : 'login')
+  const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (urlResetToken) {
+      setMode('reset')
+      setError('')
+      setNotice('')
+    }
+  }, [urlResetToken])
+
+  async function readJsonResponse(res) {
+    const text = await res.text()
+    if (!text) return {}
+
+    try {
+      return JSON.parse(text)
+    } catch {
+      throw new Error(`Server error (${res.status}) — check that the backend is running`)
+    }
+  }
+
+  function showLogin(message = '') {
+    setMode('login')
+    setSearchParams({})
+    setError('')
+    setNotice(message)
+    setPassword('')
+  }
+
+  function showForgotPassword(e) {
+    e.preventDefault()
+    setMode('forgot')
+    setError('')
+    setNotice('')
+    setPassword('')
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+    setNotice('')
     setLoading(true)
     try {
       const res = await fetch('/api/admin/login', {
@@ -23,19 +64,11 @@ export default function Login() {
         body: JSON.stringify({ email: username, password }),
       })
 
-      // Read as text first — res.json() crashes if the body is empty
-      const text = await res.text()
-      let data = {}
-      if (text) {
-        try { data = JSON.parse(text) }
-        catch { throw new Error(`Server error (${res.status}) — check that the backend is running`) }
-      }
-
+      const data = await readJsonResponse(res)
       if (!res.ok) throw new Error(data.error || `Login failed (${res.status})`)
       login(data.token, data.admin)
       navigate('/', { replace: true })
     } catch (err) {
-      // Network-level failure (backend not reachable at all)
       if (err.name === 'TypeError') {
         setError('Cannot reach the server — make sure the backend is running on port 5001')
       } else {
@@ -45,6 +78,13 @@ export default function Login() {
       setLoading(false)
     }
   }
+
+  const title = mode === 'forgot' ? 'Reset Password' : mode === 'reset' ? 'Create New Password' : 'Welcome Back'
+  const subtitle = mode === 'forgot'
+    ? 'Enter your admin email and we will generate a secure reset link.'
+    : mode === 'reset'
+      ? 'Set a new password for your Saddha.org admin account.'
+      : <>Sign in to the Saddha.org admin dashboard to manage<br />the temple directory.</>
 
   return (
     <div className="lp-root">
@@ -101,62 +141,78 @@ export default function Login() {
           {/* Secure label */}
           <p className="lp-secure-label"><span className="lp-secure-dot" />SECURE ADMIN ACCESS</p>
 
-          <h2 className="lp-form-title">Welcome Back</h2>
-          <p className="lp-form-subtitle">
-            Sign in to the Saddha.org admin dashboard to manage<br />the temple directory.
-          </p>
+          <h2 className="lp-form-title">{title}</h2>
+          <p className="lp-form-subtitle">{subtitle}</p>
 
-          {error && (
-            <div className="lp-error">
-              <span>⚠</span>
-              <span>{error}</span>
-            </div>
+          {mode === 'login' ? (
+            <>
+              {error && (
+                <div className="lp-error">
+                  <span>⚠</span>
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {notice && (
+                <div className="lp-message">
+                  <span>✓</span>
+                  <span>{notice}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="lp-form">
+                <div className="lp-field">
+                  <label htmlFor="lp-username">USERNAME</label>
+                  <input
+                    id="lp-username"
+                    type="text"
+                    placeholder="Enter your username"
+                    value={username}
+                    onChange={e => setUsername(e.target.value)}
+                    autoComplete="username"
+                    required
+                  />
+                </div>
+
+                <div className="lp-field">
+                  <div className="lp-field-header">
+                    <label htmlFor="lp-password">PASSWORD</label>
+                    <a href="#" className="lp-forgot" onClick={showForgotPassword}>Forgot Password?</a>
+                  </div>
+                  <input
+                    id="lp-password"
+                    type="password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                    required
+                  />
+                </div>
+
+                <label className="lp-remember">
+                  <input
+                    type="checkbox"
+                    checked={remember}
+                    onChange={e => setRemember(e.target.checked)}
+                  />
+                  <span>Remember me for 30 days</span>
+                </label>
+
+                <button type="submit" className="lp-submit" disabled={loading}>
+                  {loading ? 'Signing in…' : '→ SIGN IN TO DASHBOARD'}
+                </button>
+              </form>
+            </>
+          ) : (
+            <ForgotPassword
+              mode={mode}
+              resetToken={urlResetToken}
+              initialEmail={username}
+              onBackToLogin={() => showLogin()}
+              onResetComplete={message => showLogin(message)}
+            />
           )}
-
-          <form onSubmit={handleSubmit} className="lp-form">
-
-            <div className="lp-field">
-              <label htmlFor="lp-username">USERNAME</label>
-              <input
-                id="lp-username"
-                type="text"
-                placeholder="Enter your username"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                autoComplete="username"
-                required
-              />
-            </div>
-
-            <div className="lp-field">
-              <div className="lp-field-header">
-                <label htmlFor="lp-password">PASSWORD</label>
-                <a href="#" className="lp-forgot">Forgot Password?</a>
-              </div>
-              <input
-                id="lp-password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                autoComplete="current-password"
-                required
-              />
-            </div>
-
-            <label className="lp-remember">
-              <input
-                type="checkbox"
-                checked={remember}
-                onChange={e => setRemember(e.target.checked)}
-              />
-              <span>Remember me for 30 days</span>
-            </label>
-
-            <button type="submit" className="lp-submit" disabled={loading}>
-              {loading ? 'Signing in…' : '→ SIGN IN TO DASHBOARD'}
-            </button>
-          </form>
 
           <div className="lp-security-note">
             <span className="lp-lock">○</span>
