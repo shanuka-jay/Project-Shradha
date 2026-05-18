@@ -1,7 +1,7 @@
 // Run: npm run seed:admin
 // Creates default admin user: admin@saddha.org / Admin@1234
 const bcrypt = require('bcryptjs');
-const prisma = require('../prismaClient');
+const prisma = require('../src/prismaClient');
 
 async function seed() {
   const email = process.env.ADMIN_EMAIL || 'admin@saddha.org';
