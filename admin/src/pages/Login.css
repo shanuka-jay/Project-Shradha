@@ -233,6 +233,33 @@
   margin-bottom: 1.25rem;
 }
 
+.lp-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  background: #eef8f0;
+  border: 1px solid #bde5c8;
+  border-radius: 6px;
+  color: #276738;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  margin-bottom: 1.25rem;
+}
+
+.lp-reset-link {
+  display: block;
+  width: fit-content;
+  margin-top: 0.45rem;
+  color: #1f5130;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.lp-reset-link:hover {
+  text-decoration: underline;
+}
+
 /* ── Form ── */
 .lp-form {
   display: flex;
@@ -343,6 +370,22 @@
 .lp-submit:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+.lp-text-button {
+  align-self: center;
+  border: none;
+  background: transparent;
+  color: #7a5c38;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.15rem 0.25rem;
+}
+
+.lp-text-button:hover {
+  color: #3d2a11;
 }
 
 /* ── Security note ── */
