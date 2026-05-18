@@ -1,12 +1,33 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const prisma = require('../prismaClient');
 const { requireAdmin } = require('../middleware/auth');
 const { normalizeImageUrl, normalizeImageUrlArray } = require('../utils/imageUrls');
+const { sendAdminPasswordResetEmail } = require('../services/mailService');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'saddha-secret-key';
+const RESET_TOKEN_TTL_MINUTES = 30;
+
+function hashResetToken(token) {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+function getAdminBaseUrl(req) {
+  const configuredUrl = process.env.ADMIN_APP_URL || process.env.ADMIN_URL;
+  if (configuredUrl) return configuredUrl.replace(/\/$/, '');
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('ADMIN_APP_URL is required for password reset links');
+  }
+
+  const origin = req.get('origin');
+  if (origin) return origin.replace(/\/$/, '');
+
+  return `${req.protocol}://${req.get('host')}`;
+}
 
 // POST /api/admin/login
 router.post('/login', async (req, res) => {
@@ -22,6 +43,84 @@ router.post('/login', async (req, res) => {
       JWT_SECRET, { expiresIn: '8h' }
     );
     res.json({ token, admin: { id: admin.id, name: admin.name, email: admin.email, role: admin.role } });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/admin/forgot-password
+router.post('/forgot-password', async (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const responseMessage = 'If an admin account exists for that email, a reset link has been generated.';
+
+  if (!email) return res.status(400).json({ error: 'Email required' });
+
+  try {
+    const admin = await prisma.admin.findUnique({ where: { email } });
+    if (!admin) return res.json({ message: responseMessage });
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenHash = hashResetToken(resetToken);
+    const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MINUTES * 60 * 1000);
+
+    await prisma.admin.update({
+      where: { id: admin.id },
+      data: {
+        passwordResetTokenHash: resetTokenHash,
+        passwordResetExpiresAt: expiresAt,
+        passwordResetRequestedAt: new Date(),
+      },
+    });
+
+    const resetLink = `${getAdminBaseUrl(req)}/login?resetToken=${resetToken}`;
+    const emailSent = await sendAdminPasswordResetEmail({
+      admin,
+      resetLink,
+      expiresInMinutes: RESET_TOKEN_TTL_MINUTES,
+    });
+    if (!emailSent || process.env.NODE_ENV !== 'production') {
+      console.log(`Admin password reset link for ${admin.email}: ${resetLink}`);
+    }
+    if (!emailSent) {
+      console.warn('Brevo email was not sent because BREVO_API_KEY or BREVO_SENDER_EMAIL is missing.');
+    }
+
+    const body = { message: responseMessage };
+    if (process.env.NODE_ENV !== 'production') {
+      body.resetLink = resetLink;
+      if (!emailSent) body.emailWarning = 'Brevo email is not configured in server/.env.';
+    }
+    res.json(body);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/admin/reset-password
+router.post('/reset-password', async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  if (!token || !newPassword) return res.status(400).json({ error: 'Token and new password required' });
+  if (newPassword.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+
+  try {
+    const admin = await prisma.admin.findFirst({
+      where: {
+        passwordResetTokenHash: hashResetToken(token),
+        passwordResetExpiresAt: { gt: new Date() },
+      },
+    });
+
+    if (!admin) return res.status(400).json({ error: 'Reset link is invalid or expired' });
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await prisma.admin.update({
+      where: { id: admin.id },
+      data: {
+        passwordHash,
+        passwordResetTokenHash: null,
+        passwordResetExpiresAt: null,
+        passwordResetRequestedAt: null,
+      },
+    });
+
+    res.json({ message: 'Password reset successful. You can sign in with your new password.' });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
