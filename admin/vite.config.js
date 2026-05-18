@@ -1,16 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// Admin panel — port 5173, no auto-open (access manually when needed)
-// Public site  — port 3000 (opens automatically)
-// Backend API  — port 5001
-
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 5173,
-    strictPort: true,
-    open: false,      
+    port: 3000,
+    open: true,       // auto-opens http://localhost:3000 in browser
     proxy: {
       '/api': {
         target: 'http://localhost:5001',
@@ -19,7 +14,7 @@ export default defineConfig({
       '/uploads': {
         target: 'http://localhost:5001',
         changeOrigin: true,
-      },
-    },
-  },
+      }
+    }
+  }
 })
