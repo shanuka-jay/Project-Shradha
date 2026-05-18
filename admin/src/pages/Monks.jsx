@@ -34,6 +34,9 @@ export default function Monks() {
   const [openMenu, setOpenMenu] = useState(null)
   const limit = 11
 
+  // Client site base URL — set VITE_CLIENT_URL in admin/.env
+  const clientUrl = import.meta.env.VITE_CLIENT_URL || 'http://localhost:3000'
+
   async function fetchMonks() {
     setLoading(true)
     const params = new URLSearchParams({ page, limit })
@@ -82,6 +85,12 @@ export default function Monks() {
       body: JSON.stringify({ ...monk, status: newStatus, languages: monk.languages || [], socialLinks: monk.socialLinks || {} }),
     })
     setOpenMenu(null); fetchMonks()
+  }
+
+  // Opens the public monk profile in a new tab with ?preview=admin
+  // so MonkProfile.jsx can show the "Back to Admin" banner
+  function handleViewPage(monkId) {
+    window.open(`${clientUrl}/monks/${monkId}?preview=admin`, '_blank')
   }
 
   const totalPages = Math.ceil(total / limit)
@@ -183,7 +192,10 @@ export default function Monks() {
                   </div>
                   <div className="mk-card-footer">
                     <Link to={`/monks/${m.id}/edit`} className="mk-btn-edit">Edit Profile</Link>
-                    <button className="mk-btn-view">View Page</button>
+                    {/* ── FIX: View Page now opens the public profile in a new tab ── */}
+                    <button className="mk-btn-view" onClick={() => handleViewPage(m.id)}>
+                      View Page
+                    </button>
                     <div className="mk-menu-wrap">
                       <button className="mk-menu-trigger" onClick={() => setOpenMenu(openMenu === m.id ? null : m.id)}>···</button>
                       {openMenu === m.id && (

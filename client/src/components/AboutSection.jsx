@@ -18,7 +18,7 @@ const AboutSection = () => {
               <div className="feat"><span className="num">02</span><div><p className="ft">Temple Histories &amp; Details</p><p className="fd">Full information including founding story, chief monk, address, and contact details.</p></div></div>
               <div className="feat"><span className="num">03</span><div><p className="ft">Community Connection</p><p className="fd">Find monks, events, Dhamma schools, and meditation programs near you.</p></div></div>
             </div>
-            <a className="cta" href="#">Read Our Story →</a>
+            <a className="cta" href="/about">Read Our Story →</a>
           </div>
           <div className="imgs">
             <div className="col">
