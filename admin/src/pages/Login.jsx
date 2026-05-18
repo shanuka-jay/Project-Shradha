@@ -11,6 +11,7 @@ export default function Login() {
   const urlResetToken = searchParams.get('resetToken') || ''
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [remember, setRemember] = useState(false)
   const [mode, setMode] = useState(urlResetToken ? 'reset' : 'login')
   const [error, setError] = useState('')
@@ -77,6 +78,7 @@ export default function Login() {
     setError('')
     setNotice(message)
     setPassword('')
+    setShowPassword(false)
   }
 
   function showForgotPassword(e) {
@@ -85,6 +87,7 @@ export default function Login() {
     setError('')
     setNotice('')
     setPassword('')
+    setShowPassword(false)
   }
 
   async function handleSubmit(e) {
@@ -214,15 +217,38 @@ export default function Login() {
                     <label htmlFor="lp-password">PASSWORD</label>
                     <a href="#" className="lp-forgot" onClick={showForgotPassword}>Forgot Password?</a>
                   </div>
-                  <input
-                    id="lp-password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    autoComplete="current-password"
-                    required
-                  />
+                  <div className="lp-password-wrap">
+                    <input
+                      id="lp-password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      autoComplete="current-password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="lp-password-toggle"
+                      onClick={() => setShowPassword(value => !value)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      title={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? (
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M3 3l18 18" />
+                          <path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58" />
+                          <path d="M9.88 5.09A8.8 8.8 0 0 1 12 4.83c5 0 8.5 4.17 9.5 7.17a11.2 11.2 0 0 1-2.06 3.31" />
+                          <path d="M6.1 6.1C4.31 7.32 3.09 9.18 2.5 12c1 3 4.5 7.17 9.5 7.17 1.56 0 2.97-.41 4.18-1.08" />
+                        </svg>
+                      ) : (
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M2.5 12c1-3 4.5-7.17 9.5-7.17S20.5 9 21.5 12c-1 3-4.5 7.17-9.5 7.17S3.5 15 2.5 12z" />
+                          <circle cx="12" cy="12" r="2.8" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <label className="lp-remember">
