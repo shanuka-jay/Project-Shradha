@@ -46,6 +46,23 @@ router.post('/login', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// GET /api/admin/login-stats
+router.get('/login-stats', async (req, res) => {
+  try {
+    const [totalTemples, totalMonks, stateCount] = await Promise.all([
+      prisma.temple.count({ where: { status: 'published' } }),
+      prisma.monk.count({ where: { status: 'published' } }),
+      prisma.temple.groupBy({
+        by: ['state'],
+        where: { status: 'published' },
+        _count: { state: true },
+      }),
+    ]);
+
+    res.json({ totalTemples, states: stateCount.length, totalMonks });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // POST /api/admin/forgot-password
 router.post('/forgot-password', async (req, res) => {
   const email = String(req.body.email || '').trim().toLowerCase();

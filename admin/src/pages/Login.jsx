@@ -16,6 +16,11 @@ export default function Login() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [loading, setLoading] = useState(false)
+  const [heroStats, setHeroStats] = useState({
+    totalTemples: null,
+    states: null,
+    totalMonks: null,
+  })
 
   useEffect(() => {
     if (urlResetToken) {
@@ -24,6 +29,36 @@ export default function Login() {
       setNotice('')
     }
   }, [urlResetToken])
+
+  useEffect(() => {
+    let ignore = false
+
+    async function loadHeroStats() {
+      try {
+        const res = await fetch('/api/admin/login-stats')
+        const data = await readJsonResponse(res)
+        if (!res.ok) throw new Error(data.error || `Stats failed (${res.status})`)
+        if (!ignore) {
+          setHeroStats({
+            totalTemples: data.totalTemples,
+            states: data.states,
+            totalMonks: data.totalMonks,
+          })
+        }
+      } catch {
+        if (!ignore) {
+          setHeroStats({
+            totalTemples: null,
+            states: null,
+            totalMonks: null,
+          })
+        }
+      }
+    }
+
+    loadHeroStats()
+    return () => { ignore = true }
+  }, [])
 
   async function readJsonResponse(res) {
     const text = await res.text()
@@ -115,20 +150,20 @@ export default function Login() {
           </p>
           <div className="lp-stats">
             <div className="lp-stat">
-              <span className="lp-stat-num">73</span>
+              <span className="lp-stat-num">{heroStats.totalTemples ?? '—'}</span>
               <span className="lp-stat-label">TEMPLES LISTED</span>
             </div>
             <div className="lp-stat">
-              <span className="lp-stat-num">28</span>
+              <span className="lp-stat-num">{heroStats.states ?? '—'}</span>
               <span className="lp-stat-label">STATES COVERED</span>
             </div>
             <div className="lp-stat">
-              <span className="lp-stat-num">12</span>
+              <span className="lp-stat-num">{heroStats.totalMonks ?? '—'}</span>
               <span className="lp-stat-label">MONK PROFILES</span>
             </div>
           </div>
           <div className="lp-hero-links">
-            <a href="/" className="lp-hero-link">↩ Return to Saddha.org</a>
+            <a href="http://localhost:3000" className="lp-hero-link">↩ Return to Saddha.org</a>
             <a href="mailto:support@saddha.org" className="lp-hero-link">Contact Support</a>
           </div>
         </div>
@@ -162,11 +197,11 @@ export default function Login() {
 
               <form onSubmit={handleSubmit} className="lp-form">
                 <div className="lp-field">
-                  <label htmlFor="lp-username">USERNAME</label>
+                  <label htmlFor="lp-username">EMAIL</label>
                   <input
                     id="lp-username"
                     type="text"
-                    placeholder="Enter your username"
+                    placeholder="Enter your email"
                     value={username}
                     onChange={e => setUsername(e.target.value)}
                     autoComplete="username"
