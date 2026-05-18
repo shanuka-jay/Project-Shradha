@@ -282,7 +282,7 @@ const TempleDetails = ({ temple, onBack }) => {
     return (
         <main className="temple-details-page">
             <header className="details-top-nav">
-                <div className="logo">Saddha.org</div>
+                <div className="logo"></div>
                 <nav aria-label="Temple details navigation">
                     <a href="#overview">Overview</a>
                     <a href="#history">History</a>
@@ -625,41 +625,7 @@ const TempleDetails = ({ temple, onBack }) => {
 
             </section>
 
-            <footer className="details-footer">
 
-                <div>
-
-                    <h3>Saddha.org</h3>
-
-                    <p>A sacred digital directory of Sri Lankan Buddhist temples.</p>
-
-                </div>
-
-                <div>
-
-                    <h4>Pages</h4>
-
-                    <p>Home</p>
-
-                    <p>About</p>
-
-                    <p>Temple Map</p>
-
-                    <p>Contact</p>
-
-                </div>
-
-                <div>
-
-                    <h4>Contact</h4>
-
-                    <p>saddha.usa@gmail.com</p>
-
-                    <p>Washington DC, USA</p>
-
-                </div>
-
-            </footer>
 
         </main>
 
