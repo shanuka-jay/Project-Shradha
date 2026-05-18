@@ -75,6 +75,14 @@
     animation: temple-hero-enter 0.72s var(--details-motion) 0.08s both;
 }
 
+.hero-gallery--count-1 {
+    grid-template-columns: 1fr;
+}
+
+.hero-gallery--count-2 {
+    grid-template-columns: 1fr 1fr;
+}
+
 .hero-image {
     position: relative;
     overflow: hidden;
@@ -112,7 +120,15 @@
     background: #fff;
     border-bottom: 1px solid #e8e1d5;
     padding: 28px 42px 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 28px;
     animation: temple-content-rise 0.56s var(--details-motion) 0.16s both;
+}
+
+.hero-summary-copy {
+    min-width: 0;
 }
 
 .hero-summary h1 {
@@ -130,6 +146,13 @@
     line-height: 1.6;
 }
 
+.hero-summary-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+}
+
 .details-tabs {
     height: 54px;
     padding: 0 42px;
@@ -142,7 +165,9 @@
 }
 
 .details-tabs a,
-.details-tabs button {
+.details-tabs button,
+.hero-summary-actions a,
+.hero-summary-actions button {
     text-decoration: none;
     text-transform: uppercase;
     font-size: 11px;
@@ -156,7 +181,9 @@
 }
 
 .details-tabs a:hover,
-.details-tabs button:hover {
+.details-tabs button:hover,
+.hero-summary-actions a:hover,
+.hero-summary-actions button:hover {
     color: #2c2418;
     transform: translateY(-1px);
 }
@@ -168,18 +195,23 @@
 }
 
 .tab-actions a,
-.tab-actions button {
+.tab-actions button,
+.hero-summary-actions a,
+.hero-summary-actions button {
     border: 1px solid #d9c9a8;
     padding: 10px 14px;
 }
 
-.tab-actions button:last-child {
+.tab-actions button:last-child,
+.hero-summary-actions button:last-child {
     background: #c19a3b;
     color: white;
 }
 
 .tab-actions a:hover,
-.tab-actions button:hover {
+.tab-actions button:hover,
+.hero-summary-actions a:hover,
+.hero-summary-actions button:hover {
     border-color: #c19a3b;
     box-shadow: 0 8px 18px rgba(91, 57, 22, 0.12);
 }
@@ -708,10 +740,23 @@ blockquote:hover {
 
     .hero-summary {
         padding: 24px 22px 26px;
+        align-items: flex-start;
+        flex-direction: column;
     }
 
     .hero-summary h1 {
         font-size: 32px;
+    }
+
+    .hero-summary-actions {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .hero-summary-actions a,
+    .hero-summary-actions button {
+        flex: 1 1 150px;
+        text-align: center;
     }
 
     .event-cards,

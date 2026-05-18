@@ -152,6 +152,14 @@ const getTempleShareUrl = () => {
     return window.location.href;
 };
 
+const getTempleHeroPhotos = (temple) => {
+    const photos = [temple.imageUrl, ...(temple.gallery || [])]
+        .map((photo) => String(photo || "").trim())
+        .filter(Boolean);
+
+    return [...new Set(photos)].slice(0, 3);
+};
+
 const TempleDetails = ({ temple, onBack }) => {
     const [events, setEvents] = useState([]);
     const [eventsLoading, setEventsLoading] = useState(false);
@@ -224,6 +232,7 @@ const TempleDetails = ({ temple, onBack }) => {
     const templePrograms = (temple.services || [])
         .map(normalizeService)
         .filter((service) => service?.name?.trim());
+    const heroPhotos = getTempleHeroPhotos(temple);
     const phoneHref = getPhoneHref(temple.contact);
     const emailAddress = String(temple.email || "").trim();
 
@@ -293,32 +302,27 @@ const TempleDetails = ({ temple, onBack }) => {
                 </nav>
             </header>
 
-            <section className="hero-gallery">
-                <div className="hero-image-large">
-                    <img src={temple.imageUrl} alt={temple.name} />
-                </div>
-
-                <div className="hero-image">
-                    <img src={temple.gallery?.[0] || temple.imageUrl} alt="Temple view" />
-                </div>
-
-                <div className={"hero-image"}>
-                    <img src={temple.gallery?.[1] || temple.imageUrl} alt="Temple monk" />
-                </div>
+            <section className={`hero-gallery hero-gallery--count-${heroPhotos.length}`}>
+                {heroPhotos.map((photo, index) => (
+                    <div
+                        className={index === 0 ? "hero-image-large" : "hero-image"}
+                        key={photo}
+                    >
+                        <img
+                            src={photo}
+                            alt={index === 0 ? temple.name : `${temple.name} view ${index + 1}`}
+                        />
+                    </div>
+                ))}
             </section>
 
             <section className="hero-summary">
-                <h1>{temple.name}</h1>
-                <p>{temple.address}</p>
-            </section>
+                <div className="hero-summary-copy">
+                    <h1>{temple.name}</h1>
+                    <p>{temple.address}</p>
+                </div>
 
-            <section className="details-tabs">
-                {/*<a href="#overview"> Overview</a>*/}
-                {/*<a href="#history"> History</a>*/}
-                {/*<a href="#gallery"> Gallery</a>*/}
-                {/*<a href="#events" > Events</a>*/}
-
-                <div className="tab-actions">
+                <div className="hero-summary-actions">
                     <a
 
                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
