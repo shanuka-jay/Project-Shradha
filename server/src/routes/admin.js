@@ -5,7 +5,12 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const prisma = require('../prismaClient');
 const { requireAdmin } = require('../middleware/auth');
-const { normalizeImageUrl, normalizeImageUrlArray } = require('../utils/imageUrls');
+const { normalizeImageUrl, normalizeImageUrlArray, serializeJsonArray, parseJsonArray } = require('../utils/imageUrls');
+
+function fmtTemple(t) {
+  if (!t) return t;
+  return { ...t, galleryImages: parseJsonArray(t.galleryImages), images: parseJsonArray(t.images), services: parseJsonArray(t.services) };
+}
 const { sendAdminPasswordResetEmail } = require('../services/mailService');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'saddha-secret-key';
@@ -169,14 +174,14 @@ router.get('/temples', requireAdmin, async (req, res) => {
     const where = {};
     if (state) where.state = state;
     if (status) where.status = status;
-    if (search) where.name = { contains: search, mode: 'insensitive' };
+    if (search) where.name = { contains: search };
     const [temples, total] = await Promise.all([
       prisma.temple.findMany({
         where, skip: (page - 1) * Number(limit), take: Number(limit), orderBy: { createdAt: 'desc' },
       }),
       prisma.temple.count({ where }),
     ]);
-    res.json({ temples, total, page: Number(page), limit: Number(limit) });
+    res.json({ temples: temples.map(fmtTemple), total, page: Number(page), limit: Number(limit) });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -184,7 +189,7 @@ router.get('/temples/:id', requireAdmin, async (req, res) => {
   try {
     const temple = await prisma.temple.findUnique({ where: { id: req.params.id } });
     if (!temple) return res.status(404).json({ error: 'Temple not found' });
-    res.json(temple);
+    res.json(fmtTemple(temple));
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -215,16 +220,16 @@ router.post('/temples', requireAdmin, async (req, res) => {
         history: history || null,
         mainImage: normalizeImageUrl(mainImage),
         chiefMonkImage: normalizeImageUrl(chiefMonkImage),
-        galleryImages: normalizeImageUrlArray(galleryImages),
-        images: normalizeImageUrlArray(images),
-        services: services || [],
+        galleryImages: serializeJsonArray(normalizeImageUrlArray(galleryImages)),
+        images: serializeJsonArray(normalizeImageUrlArray(images)),
+        services: serializeJsonArray(services || []),
         lat, lng,
         status: status || 'published',
         regionTag: regionTag || null,
         mapVisible: mapVisible !== false,
       },
     });
-    res.status(201).json(temple);
+    res.status(201).json(fmtTemple(temple));
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -245,13 +250,13 @@ router.put('/temples/:id', requireAdmin, async (req, res) => {
         history: history !== undefined ? history : undefined,
         mainImage: mainImage !== undefined ? normalizeImageUrl(mainImage) : undefined,
         chiefMonkImage: chiefMonkImage !== undefined ? normalizeImageUrl(chiefMonkImage) : undefined,
-        galleryImages: galleryImages !== undefined ? normalizeImageUrlArray(galleryImages) : undefined,
-        images: images !== undefined ? normalizeImageUrlArray(images) : undefined,
-        services: services !== undefined ? (services || []) : undefined,
+        galleryImages: galleryImages !== undefined ? serializeJsonArray(normalizeImageUrlArray(galleryImages)) : undefined,
+        images: images !== undefined ? serializeJsonArray(normalizeImageUrlArray(images)) : undefined,
+        services: services !== undefined ? serializeJsonArray(services || []) : undefined,
         lat, lng, status, mapVisible, regionTag,
       },
     });
-    res.json(temple);
+    res.json(fmtTemple(temple));
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -263,7 +268,7 @@ router.patch('/temples/:id/overview', requireAdmin, async (req, res) => {
       where: { id: req.params.id },
       data: { overview },
     });
-    res.json(temple);
+    res.json(fmtTemple(temple));
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -274,7 +279,7 @@ router.patch('/temples/:id/history', requireAdmin, async (req, res) => {
       where: { id: req.params.id },
       data: { history },
     });
-    res.json(temple);
+    res.json(fmtTemple(temple));
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -285,7 +290,7 @@ router.patch('/temples/:id/main-image', requireAdmin, async (req, res) => {
       where: { id: req.params.id },
       data: { mainImage: normalizeImageUrl(mainImage) },
     });
-    res.json(temple);
+    res.json(fmtTemple(temple));
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -296,7 +301,7 @@ router.patch('/temples/:id/chief-monk-image', requireAdmin, async (req, res) => 
       where: { id: req.params.id },
       data: { chiefMonkImage: normalizeImageUrl(chiefMonkImage) },
     });
-    res.json(temple);
+    res.json(fmtTemple(temple));
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -305,9 +310,9 @@ router.patch('/temples/:id/gallery', requireAdmin, async (req, res) => {
     const { galleryImages } = req.body;
     const temple = await prisma.temple.update({
       where: { id: req.params.id },
-      data: { galleryImages: normalizeImageUrlArray(galleryImages) },
+      data: { galleryImages: serializeJsonArray(normalizeImageUrlArray(galleryImages)) },
     });
-    res.json(temple);
+    res.json(fmtTemple(temple));
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -316,9 +321,9 @@ router.patch('/temples/:id/services', requireAdmin, async (req, res) => {
     const { services } = req.body;
     const temple = await prisma.temple.update({
       where: { id: req.params.id },
-      data: { services: services || [] },
+      data: { services: serializeJsonArray(services || []) },
     });
-    res.json(temple);
+    res.json(fmtTemple(temple));
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
