@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import { useAuth } from '../context/AuthContext'
+import ConfirmDialog from '../components/ConfirmDialog'
 
 const ROLE_PALETTE = {
   'Abbot':            { bg: '#fef3c7', color: '#92400e' },
@@ -31,10 +33,11 @@ export default function Monks() {
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [deleting, setDeleting] = useState(null)
+  const [toggling, setToggling] = useState(null)
   const [openMenu, setOpenMenu] = useState(null)
+  const [confirm, setConfirm] = useState(null)
   const limit = 11
 
-  // Client site base URL — set VITE_CLIENT_URL in admin/.env
   const clientUrl = import.meta.env.VITE_CLIENT_URL || 'http://localhost:3000'
 
   async function fetchMonks() {
@@ -49,7 +52,9 @@ export default function Monks() {
       const data = await res.json()
       setMonks(data.monks || [])
       setTotal(data.total || 0)
-    } catch { }
+    } catch {
+      toast.error('Failed to load monk profiles.')
+    }
     finally { setLoading(false) }
   }
 
@@ -65,30 +70,52 @@ export default function Monks() {
     return () => document.removeEventListener('mousedown', close)
   }, [])
 
-  async function handleDelete(id, name) {
-    if (!window.confirm(`Delete profile for "${name}"? This cannot be undone.`)) return
-    setOpenMenu(null); setDeleting(id)
+  function handleDelete(id, name) {
+    setOpenMenu(null)
+    setConfirm({
+      title: 'Delete Monk Profile',
+      message: `The profile for "${name}" will be permanently removed. This cannot be undone.`,
+      confirmLabel: 'Yes, Delete',
+      variant: 'danger',
+      onConfirm: () => doDelete(id, name),
+    })
+  }
+
+  async function doDelete(id, name) {
+    setDeleting(id)
     try {
-      await fetch(`/api/admin/monks/${id}`, {
+      const res = await fetch(`/api/admin/monks/${id}`, {
         method: 'DELETE', headers: { Authorization: `Bearer ${token}` },
       })
+      if (!res.ok) throw new Error('Delete failed')
+      toast.success(`Profile for "${name}" deleted.`)
       fetchMonks()
-    } catch { }
+    } catch {
+      toast.error(`Failed to delete profile for "${name}".`)
+    }
     finally { setDeleting(null) }
   }
 
   async function toggleStatus(monk) {
     const newStatus = monk.status === 'published' ? 'draft' : 'published'
-    await fetch(`/api/admin/monks/${monk.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ ...monk, status: newStatus, languages: monk.languages || [], socialLinks: monk.socialLinks || {} }),
-    })
-    setOpenMenu(null); fetchMonks()
+    setToggling(monk.id)
+    setOpenMenu(null)
+    try {
+      const res = await fetch(`/api/admin/monks/${monk.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ ...monk, status: newStatus, languages: monk.languages || [], socialLinks: monk.socialLinks || {} }),
+      })
+      if (!res.ok) throw new Error('Update failed')
+      const displayName = monk.displayName || monk.legalName
+      toast.success(`"${displayName}" set to ${newStatus}.`)
+      fetchMonks()
+    } catch {
+      toast.error(`Failed to update status for "${monk.displayName || monk.legalName}".`)
+    }
+    finally { setToggling(null) }
   }
 
-  // Opens the public monk profile in a new tab with ?preview=admin
-  // so MonkProfile.jsx can show the "Back to Admin" banner
   function handleViewPage(monkId) {
     window.open(`${clientUrl}/monks/${monkId}?preview=admin`, '_blank')
   }
@@ -97,6 +124,8 @@ export default function Monks() {
 
   return (
     <div style={{ padding: '2rem', maxWidth: 1300 }}>
+      <ConfirmDialog config={confirm} onClose={() => setConfirm(null)} />
+
       <style>{`
         .mk-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; }
         @media(max-width:1100px){.mk-grid{grid-template-columns:repeat(2,1fr);}}
@@ -192,7 +221,6 @@ export default function Monks() {
                   </div>
                   <div className="mk-card-footer">
                     <Link to={`/monks/${m.id}/edit`} className="mk-btn-edit">Edit Profile</Link>
-                    {/* ── FIX: View Page now opens the public profile in a new tab ── */}
                     <button className="mk-btn-view" onClick={() => handleViewPage(m.id)}>
                       View Page
                     </button>
@@ -200,9 +228,9 @@ export default function Monks() {
                       <button className="mk-menu-trigger" onClick={() => setOpenMenu(openMenu === m.id ? null : m.id)}>···</button>
                       {openMenu === m.id && (
                         <div className="mk-menu-dropdown">
-                          <button className="mk-menu-item" onClick={() => toggleStatus(m)}>
+                          <button className="mk-menu-item" disabled={toggling === m.id} onClick={() => toggleStatus(m)}>
                             <i className={`fas fa-${m.status === 'published' ? 'eye-slash' : 'eye'}`} style={{ width: 14 }} />
-                            {m.status === 'published' ? 'Set Draft' : 'Publish'}
+                            {toggling === m.id ? 'Updating…' : m.status === 'published' ? 'Set Draft' : 'Publish'}
                           </button>
                           <div className="mk-menu-sep" />
                           <button className="mk-menu-item danger" disabled={deleting === m.id}
