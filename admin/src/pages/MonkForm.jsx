@@ -295,10 +295,10 @@ export default function MonkForm() {
 
               {/* Or paste URL */}
               <div style={{ marginTop: '1rem' }}>
-                <label style={lbl}>Or paste Cloudinary URL</label>
+                <label style={lbl}>Or paste Local Storage URL From Media Library</label>
                 <div className="mf-url-row">
                   <input style={{ ...inp, flex: 1 }} name="profilePhoto"
-                    value={form.profilePhoto} onChange={handleChange} placeholder="https://res.cloudinary.com/…" />
+                    value={form.profilePhoto} onChange={handleChange} placeholder="/uploads/…" />
                   {form.profilePhoto && (
                     <button type="button" className="mf-url-btn"
                       onClick={() => setForm(f => ({ ...f, profilePhoto: '' }))}>✕</button>
