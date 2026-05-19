@@ -69,7 +69,12 @@ export default function MapManagement() {
       const res = await fetch('/api/admin/map/geocode', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ address: `${temple.address}, ${temple.state}` }),
+        body: JSON.stringify({
+          address: temple.address,
+          city:    temple.city  || '',
+          zip:     temple.zip   || '',
+          state:   temple.state || '',
+        }),
       })
       const data = await res.json()
       if (Number.isFinite(Number(data.lat)) && Number.isFinite(Number(data.lng))) {
