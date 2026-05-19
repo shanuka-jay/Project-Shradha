@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import { useAuth } from '../context/AuthContext'
 
 const EVENT_TYPES = ['Dhamma Service','Meditation','School','Celebration','Vesak','Poson Poya','Other']
@@ -15,8 +16,6 @@ export default function EventForm() {
   const [temples, setTemples] = useState([])
   const [loading, setLoading] = useState(false)
   const [fetchLoading, setFetchLoading] = useState(isEdit)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
 
   useEffect(() => {
     fetch('/api/admin/temples?limit=200', { headers: { Authorization: `Bearer ${token}` } })
@@ -38,7 +37,7 @@ export default function EventForm() {
           recurring: data.recurring || false, recurringPattern: data.recurringPattern || '',
           status: data.status || 'published',
         })
-      } catch (err) { setError(err.message) }
+      } catch (err) { toast.error(err.message) }
       finally { setFetchLoading(false) }
     }
     load()
@@ -47,13 +46,16 @@ export default function EventForm() {
   function handleChange(e) {
     const val = e.target.type === 'checkbox' ? e.target.checked : e.target.value
     setForm(f => ({ ...f, [e.target.name]: val }))
-    setError(''); setSuccess('')
   }
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!form.title.trim() || !form.dateTime) { setError('Title and date/time are required.'); return }
+    if (!form.title.trim() || !form.dateTime) {
+      toast.error('Title and date/time are required.')
+      return
+    }
     setLoading(true)
+    const toastId = toast.loading(isEdit ? 'Saving changes…' : 'Creating event…')
     try {
       const payload = { ...form, linkedTempleId: form.linkedTempleId || null }
       const url = isEdit ? `/api/admin/events/${id}` : '/api/admin/events'
@@ -64,9 +66,14 @@ export default function EventForm() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Save failed')
-      setSuccess(isEdit ? 'Event updated.' : 'Event created.')
+      toast.update(toastId, {
+        render: isEdit ? 'Event updated successfully!' : 'Event created successfully!',
+        type: 'success', isLoading: false, autoClose: 2500,
+      })
       if (!isEdit) setTimeout(() => navigate('/events'), 1200)
-    } catch (err) { setError(err.message) }
+    } catch (err) {
+      toast.update(toastId, { render: err.message || 'Save failed.', type: 'error', isLoading: false, autoClose: 3500 })
+    }
     finally { setLoading(false) }
   }
 
@@ -85,9 +92,6 @@ export default function EventForm() {
         </div>
         <Link to="/events" className="btn-back">← Back to Events</Link>
       </div>
-
-      {error && <div className="form-alert form-alert-error">⚠ {error}</div>}
-      {success && <div className="form-alert form-alert-success">✓ {success}</div>}
 
       <form onSubmit={handleSubmit}>
         <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:'var(--radius)', padding:'2rem', boxShadow:'var(--shadow-sm)' }}>
