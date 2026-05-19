@@ -54,7 +54,11 @@ const About = () => {
       .then((r) => r.json())
       .then((data) => {
         const files = Array.isArray(data.files) ? data.files : []
-        const urls = files.map((f) => f.url || f.secure_url).filter(Boolean)
+        // Exclude monk profile photos and temple chief-monk photos from the
+        // public gallery — they belong to their respective profiles.
+        const urls = files
+          .map((f) => f.url || f.secure_url)
+          .filter((url) => url && !url.includes('/uploads/monks/') && !url.includes('/uploads/temple-monks/'))
         setAllMediaImages(urls)
         setGalleryImages(urls.slice(0, 7)) // show exactly 7 in the grid
       })
