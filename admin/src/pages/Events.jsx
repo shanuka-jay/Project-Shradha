@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import { useAuth } from '../context/AuthContext'
+import ConfirmDialog from '../components/ConfirmDialog'
 
 const EVENT_TYPES = ['Dhamma Service','Meditation','School','Celebration','Vesak','Poson Poya','Other']
 
@@ -14,6 +16,8 @@ export default function Events() {
   const [filterType, setFilterType] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [deleting, setDeleting] = useState(null)
+  const [toggling, setToggling] = useState(null)
+  const [confirm, setConfirm] = useState(null)
   const limit = 20
 
   async function fetchEvents() {
@@ -27,7 +31,9 @@ export default function Events() {
       const data = await res.json()
       setEvents(data.events || [])
       setTotal(data.total || 0)
-    } catch { }
+    } catch {
+      toast.error('Failed to load events.')
+    }
     finally { setLoading(false) }
   }
 
@@ -35,13 +41,56 @@ export default function Events() {
   useEffect(() => { const t = setTimeout(() => fetchEvents(), 350); return () => clearTimeout(t) }, [search])
 
   async function handleDelete(id, title) {
-    if (!window.confirm(`Delete event "${title}"?`)) return
+    setConfirm({
+      title: 'Delete Event',
+      message: `"${title}" will be permanently removed. This cannot be undone.`,
+      confirmLabel: 'Yes, Delete',
+      cancelLabel: 'Cancel',
+      variant: 'danger',
+      onConfirm: () => doDelete(id, title),
+    })
+  }
+
+  async function doDelete(id, title) {
     setDeleting(id)
     try {
-      await fetch(`/api/admin/events/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+      const res = await fetch(`/api/admin/events/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+      if (!res.ok) throw new Error('Delete failed')
+      toast.success(`"${title}" deleted successfully.`)
       fetchEvents()
-    } catch { }
+    } catch {
+      toast.error(`Failed to delete "${title}".`)
+    }
     finally { setDeleting(null) }
+  }
+
+  async function toggleStatus(event) {
+    const newStatus = event.status === 'published' ? 'draft' : 'published'
+    setToggling(event.id)
+    try {
+      const res = await fetch(`/api/admin/events/${event.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          title: event.title,
+          dateTime: event.dateTime,
+          endDateTime: event.endDateTime,
+          eventType: event.eventType,
+          description: event.description,
+          linkedTempleId: event.linkedTempleId || null,
+          recurring: event.recurring || false,
+          recurringPattern: event.recurringPattern,
+          status: newStatus,
+        }),
+      })
+      if (!res.ok) throw new Error('Update failed')
+      setEvents(es => es.map(x => x.id === event.id ? { ...x, status: newStatus } : x))
+      toast.success(`"${event.title}" set to ${newStatus}.`)
+    } catch {
+      toast.error(`Failed to update status for "${event.title}".`)
+    } finally {
+      setToggling(null)
+    }
   }
 
   function formatDateTime(dt) {
@@ -52,6 +101,8 @@ export default function Events() {
 
   return (
     <div style={{ padding: '2rem', maxWidth: 1200 }}>
+      <ConfirmDialog config={confirm} onClose={() => setConfirm(null)} />
+
       <div className="page-header">
         <div>
           <h1 className="page-title">Events</h1>
@@ -110,7 +161,17 @@ export default function Events() {
                   <td style={{ fontSize:'0.82rem', color:'var(--text-2)' }}>{formatDateTime(ev.dateTime)}</td>
                   <td style={{ fontSize:'0.85rem', color:'var(--text-2)' }}>{ev.temple?.name || '—'}</td>
                   <td style={{ textAlign:'center', fontSize:'1rem' }}>{ev.recurring ? '🔁' : '—'}</td>
-                  <td><span className={`badge badge-${ev.status}`}>{ev.status}</span></td>
+                  <td>
+                    <button
+                      onClick={() => toggleStatus(ev)}
+                      disabled={toggling === ev.id}
+                      className={`badge badge-${ev.status}`}
+                      style={{ border: 'none', cursor: 'pointer', transition: 'opacity 0.15s' }}
+                      title="Click to toggle publish/draft"
+                    >
+                      {toggling === ev.id ? '…' : ev.status}
+                    </button>
+                  </td>
                   <td>
                     <div className="td-actions">
                       <Link to={`/events/${ev.id}/edit`} className="action-btn action-edit" title="Edit">✎</Link>
