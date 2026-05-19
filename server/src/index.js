@@ -10,7 +10,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Serve uploaded images as static files at GET /uploads/<filename>
+// Serve uploaded images as static files.
+// /uploads/gallery/<filename> and /uploads/monks/<filename> are served
+// from their respective subdirectories.  The root /uploads path is kept
+// for any legacy flat filenames that may already exist in the DB.
 app.use('/uploads', express.static(UPLOADS_DIR));
 
 // Public routes
