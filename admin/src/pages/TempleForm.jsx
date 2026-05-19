@@ -199,12 +199,20 @@ export default function TempleForm() {
       const res = await fetch('/api/admin/map/geocode', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ address: `${form.address}, ${form.state}` }),
+        // Send every field we have so the server can build the most precise query possible
+        body: JSON.stringify({
+          address: form.address,
+          city:    form.city  || '',
+          zip:     form.zip   || '',
+          state:   form.state || '',
+        }),
       })
       const data = await res.json()
       if (hasCoordValues(data.lat, data.lng)) {
         setForm(f => ({ ...f, lat: String(data.lat), lng: String(data.lng) }))
-        toast.update(toastId, { render: `Geocoded: ${data.formatted}`, type: 'success', isLoading: false, autoClose: 3000 })
+        // Auto-show the map preview so the admin can verify the pin before saving
+        setMapPreview({ lat: Number(data.lat), lng: Number(data.lng) })
+        toast.update(toastId, { render: `Geocoded: ${data.formatted} — please verify the pin below before saving.`, type: 'success', isLoading: false, autoClose: 4000 })
       } else {
         throw new Error(data.error || 'Could not geocode address.')
       }
