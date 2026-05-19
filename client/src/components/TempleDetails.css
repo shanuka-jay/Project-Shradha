@@ -19,7 +19,8 @@
     background: #fff;
     gap: 24px;
     position: sticky;
-    top: var(--main-nav-height);
+    top: 0;
+    width: 100%;
     z-index: 900;
     box-shadow: 0 10px 22px rgba(44, 36, 24, 0.06);
     animation: temple-slide-down 0.5s var(--details-motion) both;
@@ -240,7 +241,7 @@
 }
 
 .content-section {
-    scroll-margin-top: calc(var(--main-nav-height) + var(--details-nav-height) + 24px);
+    scroll-margin-top: calc(var(--details-nav-height) + 24px);
     margin-bottom: 62px;
     border-top: 1px solid #e6ddcf;
     padding-top: 22px;
