@@ -11,5 +11,8 @@
     "db:push": "npm run db:push --prefix server",
     "db:studio": "npm run db:studio --prefix server",
     "seed:admin": "npm run seed:admin --prefix server"
+  },
+  "dependencies": {
+    "react-toastify": "^11.1.0"
   }
 }
