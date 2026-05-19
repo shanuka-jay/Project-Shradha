@@ -324,21 +324,15 @@ const TempleDetails = ({ temple, onBack }) => {
 
                 <div className="hero-summary-actions">
                     <a
-
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-
-                            temple.address
-
-                        )}`}
-
+                        href={
+                            Number.isFinite(temple.lat) && Number.isFinite(temple.lng)
+                                ? `https://www.google.com/maps/dir/?api=1&destination=${temple.lat},${temple.lng}`
+                                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(temple.address || temple.name)}`
+                        }
                         target="_blank"
-
                         rel="noreferrer"
-
                     >
-
                         Directions
-
                     </a>
 
                     <button  type="button" onClick={handleShare}>Share</button>
@@ -562,43 +556,29 @@ const TempleDetails = ({ temple, onBack }) => {
                         <h3>Location</h3>
 
                         <div className="map-preview">
-
                             <iframe
-
                                 title={`${temple.name} location`}
-
-                                src={`https://www.google.com/maps?q=${encodeURIComponent(
-
-                                    temple.address
-
-                                )}&output=embed`}
-
+                                src={
+                                    Number.isFinite(temple.lat) && Number.isFinite(temple.lng)
+                                        ? `https://www.google.com/maps?q=${temple.lat},${temple.lng}&output=embed`
+                                        : `https://www.google.com/maps?q=${encodeURIComponent(temple.address || temple.name)}&output=embed`
+                                }
                                 loading="lazy"
-
                                 referrerPolicy="no-referrer-when-downgrade"
-
                             />
-
                         </div>
 
                         <a
-
                             className="primary-link"
-
-                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-
-                                temple.address
-
-                            )}`}
-
+                            href={
+                                Number.isFinite(temple.lat) && Number.isFinite(temple.lng)
+                                    ? `https://www.google.com/maps/dir/?api=1&destination=${temple.lat},${temple.lng}`
+                                    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(temple.address || temple.name)}`
+                            }
                             target="_blank"
-
                             rel="noreferrer"
-
                         >
-
                             Get Directions
-
                         </a>
 
                     </div>
