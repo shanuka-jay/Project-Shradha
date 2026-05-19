@@ -6,11 +6,33 @@ const jwt = require('jsonwebtoken');
 const prisma = require('../prismaClient');
 const { requireAdmin } = require('../middleware/auth');
 const { normalizeImageUrl, normalizeImageUrlArray, serializeJsonArray, parseJsonArray } = require('../utils/imageUrls');
+const { handleImageUpload } = require('../middleware/upload');
+const { uploadTempleMonkPhoto, uploadMonkPhoto } = require('../services/localFileService');
 
 function fmtTemple(t) {
   if (!t) return t;
   return { ...t, galleryImages: parseJsonArray(t.galleryImages), images: parseJsonArray(t.images), services: parseJsonArray(t.services) };
 }
+
+// POST /api/admin/temples/upload-monk-photo — upload a temple chief-monk photo.
+// Saves to uploads/temple-monks/ so it never appears in the About page gallery.
+router.post('/temples/upload-monk-photo', requireAdmin, handleImageUpload('image', 1), async (req, res) => {
+  try {
+    if (!req.files?.length) return res.status(400).json({ error: 'No file received' });
+    const result = await uploadTempleMonkPhoto(req.files[0]);
+    res.json(result);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/admin/monks/upload-photo — upload a monk profile photo.
+// Saves to uploads/monks/
+router.post('/monks/upload-photo', requireAdmin, handleImageUpload('image', 1), async (req, res) => {
+  try {
+    if (!req.files?.length) return res.status(400).json({ error: 'No file received' });
+    const result = await uploadMonkPhoto(req.files[0]);
+    res.json(result);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
 const { sendAdminPasswordResetEmail } = require('../services/mailService');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'saddha-secret-key';
@@ -360,6 +382,13 @@ router.patch('/messages/:id/read', requireAdmin, async (req, res) => {
 router.patch('/messages/:id/archive', requireAdmin, async (req, res) => {
   try {
     const msg = await prisma.contact.update({ where: { id: req.params.id }, data: { archived: true, read: true } });
+    res.json(msg);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.patch('/messages/:id/unarchive', requireAdmin, async (req, res) => {
+  try {
+    const msg = await prisma.contact.update({ where: { id: req.params.id }, data: { archived: false } });
     res.json(msg);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
