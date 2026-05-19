@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { toast } from 'react-toastify'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import ForgotPassword from '../components/ForgotPassword'
 import { useAuth } from '../context/AuthContext'
@@ -105,13 +106,14 @@ export default function Login() {
       const data = await readJsonResponse(res)
       if (!res.ok) throw new Error(data.error || `Login failed (${res.status})`)
       login(data.token, data.admin)
+      toast.success('Signed in successfully.')
       navigate('/', { replace: true })
     } catch (err) {
-      if (err.name === 'TypeError') {
-        setError('Cannot reach the server — make sure the backend is running on port 5001')
-      } else {
-        setError(err.message)
-      }
+      const message = err.name === 'TypeError'
+        ? 'Cannot reach the server — make sure the backend is running on port 5001'
+        : err.message
+      setError(message)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
