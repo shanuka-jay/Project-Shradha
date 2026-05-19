@@ -349,6 +349,21 @@ router.patch('/temples/:id/services', requireAdmin, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+router.patch('/temples/:id/location', requireAdmin, async (req, res) => {
+  try {
+    const { lat, lng, mapVisible } = req.body;
+    const data = {};
+    if (lat !== undefined) data.lat = lat !== null ? parseFloat(lat) : null;
+    if (lng !== undefined) data.lng = lng !== null ? parseFloat(lng) : null;
+    if (mapVisible !== undefined) data.mapVisible = Boolean(mapVisible);
+    const temple = await prisma.temple.update({
+      where: { id: req.params.id },
+      data,
+    });
+    res.json(fmtTemple(temple));
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 router.delete('/temples/:id', requireAdmin, async (req, res) => {
   try {
     await prisma.temple.delete({ where: { id: req.params.id } });
