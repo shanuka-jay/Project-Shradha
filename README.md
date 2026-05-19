@@ -16,128 +16,165 @@ A full-stack web application that maps and connects every Sri Lankan Buddhist te
 | Storage  | Local disk (`server/uploads/`)      |
 | Auth     | JWT + bcryptjs                      |
 
-> **No MongoDB. No Cloudinary. No external accounts needed.**
-> The database is a single file and images are saved to a local folder.
+> No MongoDB. No Cloudinary. No external accounts needed. The database is a single file and images are saved to a local folder.
 
 ---
 
 ## Project Structure
 
 ```
-Project-Shradha-main/
-├── client/                        # Public-facing React app
+Project-Shradha-2/
+├── admin/
+│   ├── public/
 │   ├── src/
-│   │   ├── components/            # Navbar, Footer, TempleDetails, etc.
-│   │   ├── pages/                 # Home, About, Contact, MapPage, MonkProfile
-│   │   ├── data/                  # temples.js (static fallback data)
-│   │   └── utils/                 # helper functions
-│   └── package.json
-│
-├── admin/                         # Admin dashboard (separate React app)
+│   │   ├── components/
+│   │   ├── context/
+│   │   ├── pages/
+│   │   └── App.jsx
+│   ├── package.json
+│   └── vite.config.js
+├── client/
+│   ├── public/
 │   ├── src/
-│   │   ├── components/            # Layout, Sidebar, Topbar
-│   │   ├── context/               # AuthContext (JWT)
-│   │   └── pages/                 # Dashboard, Temples, Monks, Events,
-│   │                              # MediaLibrary, Messages, Settings, Login
-│   └── package.json
-│
-├── server/                        # Express API
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── data/
+│   │   └── utils/
+│   ├── package.json
+│   └── vite.config.js
+├── server/
 │   ├── prisma/
-│   │   ├── schema.prisma          # SQLite database schema
-│   │   └── dev.db                 # SQLite database file (shared via Git)
-│   ├── uploads/                   # Uploaded images (shared via Git)
+│   │   ├── schema.prisma
+│   │   └── dev.db
+│   ├── uploads/
 │   ├── src/
-│   │   ├── middleware/            # auth.js (JWT), upload.js (Multer)
-│   │   ├── routes/                # All API route files
+│   │   ├── config/
+│   │   ├── middleware/
+│   │   ├── routes/
 │   │   ├── services/
-│   │   │   └── localFileService.js  # Saves images to uploads/ folder
-│   │   ├── utils/
-│   │   │   └── imageUrls.js       # URL helpers + JSON array helpers
-│   │   └── index.js               # App entry point
+│   │   └── utils/
 │   ├── scripts/
-│   │   └── seedAdmin.js           # Creates the first admin user
-│   ├── .env                       # Environment variables (already configured)
-│   └── package.json
-│
+│   ├── package.json
+│   └── .env
+├── package.json
 └── README.md
 ```
 
 ---
 
-## Getting Started
+## Prerequisites
 
-### Prerequisites
-
-- **Node.js v18+** — [Download here](https://nodejs.org)
-- **Git** — [Download here](https://git-scm.com)
-- That's it. No cloud accounts needed.
+- Node.js v18+ installed
+- Git installed
 
 ---
 
-### For the first person (project owner)
+## Developer Setup
 
-**1. Clone and set up the server**
+### 1. Clone the repo
+
 ```bash
 git clone <your-repo-url>
-cd Project-Shradha-main/server
-npm install
-npx prisma db push
-npm run seed:admin
+cd Project-Shradha-2
+```
+
+### 2. Install dependencies for all apps
+
+```bash
+npm install --prefix server
+npm install --prefix client
+npm install --prefix admin
+```
+
+### 3. Start the server
+
+```bash
+cd server
 npm run dev
 ```
 
-**2. Set up the client**
+### 4. Start the public client
+
+In a new terminal:
+
+```bash
+cd client
+npm run dev
+```
+
+### 5. Start the admin panel
+
+In another terminal:
+
+```bash
+cd admin
+npm run dev
+```
+
+---
+
+## Shared Dev DB + Uploads Workflow
+
+This project is configured so the shared SQLite file and local upload folder are part of Git:
+- `server/prisma/dev.db`
+- `server/prisma/dev.db-journal`
+- `server/uploads/`
+
+That means teammates get the same data and uploaded images after pulling the repo.
+
+### If you are adding or editing content
+
+1. Make your changes through the admin dashboard.
+2. Commit the updated DB and uploads together:
+
+```bash
+git add server/prisma/dev.db server/prisma/dev.db-journal server/uploads
+git commit -m "update shared dev db and uploads"
+git push
+```
+
+### If you're a teammate cloning/pulling the repo
+
+```bash
+git pull
+cd server
+npm install
+npx prisma generate
+npm run dev
+```
+
+Then start the frontends separately:
+
 ```bash
 cd ../client
 npm install
 npm run dev
 ```
 
-**3. Set up the admin panel**
 ```bash
 cd ../admin
 npm install
 npm run dev
 ```
 
-**4. Push database and uploads to Git so teammates get your data**
-```bash
-cd ..
-git add .
-git commit -m "initial data and uploads"
-git push
-```
+> Do not run `npx prisma db push` or `npm run seed:admin` unless you need to recreate or reset the shared database.
 
 ---
 
-### For new team members (after cloning)
+## Root Helper Scripts
+
+From the repository root, these shortcuts are available:
 
 ```bash
-git clone <your-repo-url>
-cd Project-Shradha-main
-```
-
-**Server**
-```bash
-cd server
-npm install
-npx prisma generate
-npm run dev
-```
-> ⚠️ Do NOT run `prisma db push` or `seed:admin` — the `dev.db` with all data is already there from Git.
-
-**Client** (new terminal)
-```bash
-cd client
-npm install
-npm run dev
-```
-
-**Admin panel** (new terminal)
-```bash
-cd admin
-npm install
-npm run dev
+npm install --prefix server
+npm install --prefix client
+npm install --prefix admin
+npm run dev:server
+npm run dev:client
+npm run dev:admin
+npm run db:push
+npm run db:studio
+npm run seed:admin
 ```
 
 ---
@@ -146,9 +183,9 @@ npm run dev
 
 | App         | URL                       |
 |-------------|---------------------------|
-| Public site | http://localhost:5173     |
-| Admin panel | http://localhost:5174     |
-| API server  | http://localhost:5000     |
+| Public site | http://localhost:3000     |
+| Admin panel | http://localhost:5173     |
+| API server  | http://localhost:5001     |
 
 ---
 
@@ -159,74 +196,42 @@ Email:    admin@saddha.org
 Password: Admin@1234
 ```
 
-> Change this password from the Settings page after first login.
+> Update this password from the Settings page after first login.
 
 ---
 
-## How Images Work
+## Team Coordination Note
 
-When you upload an image through the admin panel it is saved to `server/uploads/` on disk. The image URL stored in the database will be `/uploads/filename.jpg`. The server serves these files automatically at `GET /uploads/<filename>`.
-
-To share images with teammates — commit and push the `uploads/` folder to Git:
-```bash
-git add server/uploads
-git commit -m "add uploaded images"
-git push
-```
-
-Teammates pull and the images appear immediately:
-```bash
-git pull
-```
-
----
-
-## Team Workflow Rule
-
-> **Only one person should add or edit data at a time.**
-
-Since `dev.db` is a single file, if two people change data simultaneously and both push — one person's changes will overwrite the other's. Coordinate with your team: agree on who is editing before pushing.
+Since `server/prisma/dev.db` is a single shared file, only one person should make database edits at a time. If two people edit and push at once, one person's changes can overwrite the other's.
 
 ---
 
 ## Environment Variables
 
-The `.env` file is already included and configured. No changes needed to get started.
+The server already includes the required `.env` configuration. Local development should work without extra setup.
 
-If you need to customise:
+If you need to customize values, keep these keys:
 
 ```env
-# SQLite database file path
-DATABASE_URL="file:./prisma/dev.db"
-
-# Server port
-PORT=5000
-
-# JWT secret key (change this in production)
+DATABASE_URL="file:./dev.db"
+PORT=5001
 JWT_SECRET=saddha-super-secret-key-change-in-production
-
-# Admin panel URL (used in password reset emails)
 ADMIN_APP_URL=http://localhost:5173
-
-# Optional: email for password reset (Brevo)
-# BREVO_API_KEY=
-# BREVO_SENDER_EMAIL=
-# BREVO_SENDER_NAME=
 ```
 
 ---
 
-## Useful Scripts
+## Server Scripts
 
-Run inside the `server/` directory:
+Run inside `server/`:
 
 ```bash
-npm run dev          # Start server with hot reload
-npm run start        # Start server (production)
-npm run db:push      # Apply schema changes to dev.db
-npm run db:studio    # Open Prisma Studio (visual database browser)
-npm run generate     # Regenerate Prisma client after schema changes
-npm run seed:admin   # Create the first admin user (run once only)
+npm run dev          # Start server with nodemon
+npm run start        # Start server normally
+npm run db:push      # Apply Prisma schema changes to dev.db
+npm run db:studio    # Open Prisma Studio
+npm run generate     # Regenerate Prisma client
+npm run seed:admin   # Create first admin user (run only if needed)
 ```
 
 ---
@@ -247,30 +252,96 @@ npm run seed:admin   # Create the first admin user (run once only)
 
 ### Admin Endpoints (JWT required)
 
-| Method | Endpoint                              | Description                  |
-|--------|---------------------------------------|------------------------------|
-| POST   | /api/admin/login                      | Login → returns JWT token    |
-| GET    | /api/admin/me                         | Current admin profile        |
-| GET    | /api/admin/stats                      | Dashboard stats              |
-| GET    | /api/admin/temples                    | List temples                 |
-| POST   | /api/admin/temples                    | Create temple                |
-| PUT    | /api/admin/temples/:id                | Update temple                |
-| PATCH  | /api/admin/temples/:id/gallery        | Update gallery images        |
-| PATCH  | /api/admin/temples/:id/main-image     | Update main image            |
-| DELETE | /api/admin/temples/:id                | Delete temple                |
-| GET    | /api/admin/monks                      | List monks                   |
-| POST   | /api/admin/monks                      | Create monk                  |
-| PUT    | /api/admin/monks/:id                  | Update monk                  |
-| PATCH  | /api/admin/monks/:id/photo            | Update monk photo            |
-| DELETE | /api/admin/monks/:id                  | Delete monk                  |
-| GET    | /api/admin/events                     | List events                  |
-| POST   | /api/admin/events                     | Create event                 |
-| PUT    | /api/admin/events/:id                 | Update event                 |
-| DELETE | /api/admin/events/:id                 | Delete event                 |
-| POST   | /api/admin/media/upload               | Upload images to local disk  |
-| GET    | /api/admin/media                      | List uploaded images         |
-| DELETE | /api/admin/media/:publicId            | Delete image from disk       |
-| GET    | /api/admin/messages                   | List contact messages        |
-| PATCH  | /api/admin/messages/:id/read          | Mark message as read         |
-| DELETE | /api/admin/messages/:id               | Delete message               |
-| PUT    | /api/admin/change-password            | Change admin password        |
+#### Authentication
+
+| Method | Endpoint                         | Description                          |
+|--------|----------------------------------|--------------------------------------|
+| POST   | /api/admin/login                 | Login → returns JWT token            |
+| POST   | /api/admin/forgot-password       | Request admin password reset link    |
+| POST   | /api/admin/reset-password        | Reset password with token            |
+| GET    | /api/admin/me                    | Current admin profile                |
+| GET    | /api/admin/stats                 | Dashboard summary stats              |
+| PUT    | /api/admin/change-password       | Update current admin password        |
+
+#### Temple Management
+
+| Method | Endpoint                                 | Description                           |
+|--------|------------------------------------------|---------------------------------------|
+| GET    | /api/admin/temples                       | List temples                          |
+| GET    | /api/admin/temples/:id                   | Get temple detail                     |
+| POST   | /api/admin/temples                       | Create temple                         |
+| PUT    | /api/admin/temples/:id                   | Update temple                         |
+| PATCH  | /api/admin/temples/:id/overview          | Update temple overview                |
+| PATCH  | /api/admin/temples/:id/history           | Update temple history                 |
+| PATCH  | /api/admin/temples/:id/main-image        | Update main temple image              |
+| PATCH  | /api/admin/temples/:id/chief-monk-image  | Update temple chief monk image        |
+| PATCH  | /api/admin/temples/:id/gallery           | Update temple gallery images          |
+| PATCH  | /api/admin/temples/:id/services          | Update temple services list           |
+| DELETE | /api/admin/temples/:id                   | Delete temple                         |
+| POST   | /api/admin/temples/upload-monk-photo     | Upload temple chief monk photo        |
+
+#### Monk Management
+
+| Method | Endpoint                         | Description                         |
+|--------|----------------------------------|-------------------------------------|
+| GET    | /api/admin/monks                 | List monks                          |
+| GET    | /api/admin/monks/:id             | Get monk profile                    |
+| POST   | /api/admin/monks                 | Create monk                         |
+| PUT    | /api/admin/monks/:id             | Update monk                         |
+| PATCH  | /api/admin/monks/:id/photo       | Update monk profile photo           |
+| DELETE | /api/admin/monks/:id             | Delete monk                         |
+| POST   | /api/admin/monks/upload-photo    | Upload monk profile photo           |
+
+#### Event Management
+
+| Method | Endpoint                         | Description                         |
+|--------|----------------------------------|-------------------------------------|
+| GET    | /api/admin/events                | List events                         |
+| GET    | /api/admin/events/:id            | Get event detail                    |
+| POST   | /api/admin/events                | Create event                        |
+| PUT    | /api/admin/events/:id            | Update event                        |
+| DELETE | /api/admin/events/:id            | Delete event                        |
+
+#### Media Management
+
+| Method | Endpoint                         | Description                           |
+|--------|----------------------------------|---------------------------------------|
+| POST   | /api/admin/media/upload          | Upload media gallery images           |
+| GET    | /api/admin/media                 | List gallery images                   |
+| GET    | /api/admin/media/monks           | List monk profile photos              |
+| GET    | /api/admin/media/temple-monks    | List temple chief monk photos         |
+| DELETE | /api/admin/media/:publicId       | Delete an uploaded image              |
+
+#### Map Management
+
+| Method | Endpoint                         | Description                         |
+|--------|----------------------------------|-------------------------------------|
+| GET    | /api/admin/map/overview          | Temple map overview                 |
+| GET    | /api/admin/map/missing           | Temples missing coordinates         |
+| PATCH  | /api/admin/map/:id/visibility    | Toggle temple map visibility        |
+| PATCH  | /api/admin/map/:id/coords        | Update temple coordinates           |
+| POST   | /api/admin/map/geocode           | Geocode single address              |
+| POST   | /api/admin/map/bulk-geocode      | Bulk geocode missing temples        |
+| GET    | /api/admin/map/duplicates        | Find duplicate coordinates          |
+
+#### Settings
+
+| Method | Endpoint                                 | Description                          |
+|--------|------------------------------------------|--------------------------------------|
+| GET    | /api/admin/settings/users                | List admin users                     |
+| POST   | /api/admin/settings/users                | Create admin user                    |
+| PUT    | /api/admin/settings/users/:id            | Update admin user                    |
+| PUT    | /api/admin/settings/users/:id/role       | Update admin user role               |
+| DELETE | /api/admin/settings/users/:id            | Delete admin user                    |
+| GET    | /api/admin/settings/site                 | Get site settings                    |
+| PUT    | /api/admin/settings/site                 | Update site settings                 |
+
+#### Messages
+
+| Method | Endpoint                         | Description                         |
+|--------|----------------------------------|-------------------------------------|
+| GET    | /api/admin/messages              | List contact messages               |
+| PATCH  | /api/admin/messages/:id/read     | Mark message read                   |
+| PATCH  | /api/admin/messages/:id/archive  | Archive a message                   |
+| PATCH  | /api/admin/messages/:id/unarchive| Unarchive a message                 |
+| DELETE | /api/admin/messages/:id          | Delete a message                    |
