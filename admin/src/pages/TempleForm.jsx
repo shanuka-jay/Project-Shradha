@@ -56,17 +56,28 @@ export default function TempleForm() {
   const [mapPreview, setMapPreview] = useState(null)
   const [uploading, setUploading] = useState('')
 
+  // Upload a single image. chiefMonkImage goes to its own folder so it never
+  // leaks into the About page gallery; all other single images go to gallery/.
   async function uploadFile(file, field) {
     setUploading(field)
     try {
       const fd = new FormData()
-      fd.append('images', file)
-      const res = await fetch('/api/admin/media/upload', {
+      const isMonkPhoto = field === 'chiefMonkImage'
+      if (isMonkPhoto) {
+        fd.append('image', file)
+      } else {
+        fd.append('images', file)
+      }
+      const endpoint = isMonkPhoto
+        ? '/api/admin/temples/upload-monk-photo'
+        : '/api/admin/media/upload'
+      const res = await fetch(endpoint, {
         method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd,
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Upload failed')
-      const url = data.files[0]?.url || ''
+      // /upload returns { files: [{url}] }; /upload-monk-photo returns { url }
+      const url = data.url || data.files?.[0]?.url || ''
       return url
     } finally { setUploading('') }
   }
