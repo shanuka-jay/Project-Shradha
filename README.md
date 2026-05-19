@@ -75,7 +75,8 @@ Project-Shradha-2/
 
 ```bash
 git clone <your-repo-url>
-cd Project-Shradha-2
+cd Project-Shradha
+
 ```
 
 ### 2. Install dependencies for all apps
