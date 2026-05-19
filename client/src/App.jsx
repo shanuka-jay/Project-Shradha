@@ -11,12 +11,11 @@ import './App.css'
 
 function App() {
   const location = useLocation()
-  const isMapPage = location.pathname === '/map'
-  const isMonkProfile = location.pathname.startsWith('/monks/')
+  const hideNavbar = location.pathname.startsWith('/monks/') || location.pathname.startsWith('/temples/')
 
   return (
     <>
-      {<Navbar />}
+      {!hideNavbar && <Navbar />}
       <div className="main-content">
         <Routes>
           <Route path="/"            element={<Home />} />
