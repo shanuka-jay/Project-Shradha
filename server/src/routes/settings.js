@@ -6,6 +6,7 @@ const { requireAdmin } = require('../middleware/auth');
 
 // GET /api/admin/settings/users (superadmin only)
 router.get('/users', requireAdmin, async (req, res) => {
+  if (req.admin.role !== 'superadmin') return res.status(403).json({ error: 'Forbidden' });
   try {
     const admins = await prisma.admin.findMany({
       select: { id: true, name: true, email: true, role: true, createdAt: true },
