@@ -1,12 +1,7 @@
 // Normalise a single image URL
 function normalizeImageUrl(url) {
   if (!url || typeof url !== 'string') return null;
-  // Legacy Cloudinary URL - keep as-is
-  const cm = url.match(/(https:\/\/res\.cloudinary\.com\/.+)/);
-  if (cm) return cm[1];
-  // Full https URL
   if (url.startsWith('https://') || url.startsWith('http://')) return url;
-  // Local upload path e.g. /uploads/abc.jpg
   if (url.startsWith('/uploads/')) return url;
   return null;
 }
