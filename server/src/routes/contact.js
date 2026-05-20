@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const prisma = require('../prismaClient');
+const { requireAdmin } = require('../middleware/auth');
 
 // POST contact form submission
 router.post('/', async (req, res) => {
@@ -16,7 +17,7 @@ router.post('/', async (req, res) => {
 });
 
 // GET all contact submissions (admin use)
-router.get('/', async (req, res) => {
+router.get('/', requireAdmin, async (req, res) => {
   try {
     const submissions = await prisma.contact.findMany({
       orderBy: { createdAt: 'desc' },
