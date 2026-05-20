@@ -15,7 +15,7 @@ function buildMonkData(body) {
     nationality: nationality || null, residence: residence || null,
     languages: serializeJsonArray(Array.isArray(languages) ? languages : []),
     biography: biography || null, quote: quote || null,
-    contactInfo: email || contactInfo || null, email: email || null,
+    contactInfo: contactInfo || null, email: email || null,
     templePhone: templePhone || null, address: address || null, appointment: appointment || null,
     profilePhoto: normalizeImageUrl(profilePhoto),
     socialLinks: serializeJsonObject(socialLinks || {}),
