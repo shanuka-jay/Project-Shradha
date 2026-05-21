@@ -324,6 +324,7 @@ const TempleDetails = ({ temple, onBack }) => {
 
                 <div className="hero-summary-actions">
                     <a
+                        className="hero-action-btn"
                         href={
                             Number.isFinite(temple.lat) && Number.isFinite(temple.lng)
                                 ? `https://www.google.com/maps/dir/?api=1&destination=${temple.lat},${temple.lng}`
@@ -332,13 +333,19 @@ const TempleDetails = ({ temple, onBack }) => {
                         target="_blank"
                         rel="noreferrer"
                     >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
                         Directions
                     </a>
 
-                    <button  type="button" onClick={handleShare}>Share</button>
+                    <button className="hero-action-btn" type="button" onClick={handleShare}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                        Share
+                    </button>
 
-                    <button  type="button" onClick={handleContactTemple}>Contact Temple</button>
-
+                    <button className="hero-action-btn hero-action-btn--primary" type="button" onClick={handleContactTemple}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.87a16 16 0 0 0 6.23 6.23l1.76-1.76a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        Contact Temple
+                    </button>
                 </div>
 
             </section>
@@ -439,19 +446,40 @@ const TempleDetails = ({ temple, onBack }) => {
 
                         <h2>Temple Photos</h2>
 
-                        <div className="photo-grid">
+                        {(() => {
+                            const allImages = [temple.imageUrl, ...(temple.gallery || [])]
+                                .map((p) => String(p || "").trim())
+                                .filter(Boolean)
+                                .filter((v, i, arr) => arr.indexOf(v) === i);
+                            const GRID_MAX = 5;
+                            const gridImages = allImages.slice(0, GRID_MAX);
+                            const remaining = allImages.length - GRID_MAX;
 
-                            {(temple.gallery || [temple.imageUrl, temple.imageUrl, temple.imageUrl]).map(
-
-                                (image, index) => (
-
-                                    <img key={index} src={image} alt={`${temple.name} ${index + 1}`} />
-
-                                )
-
-                            )}
-
-                        </div>
+                            return (
+                                <div className={`photo-grid photo-grid--${Math.min(gridImages.length, GRID_MAX)}`}>
+                                    {gridImages.map((image, index) => {
+                                        const isLastAndMore = index === GRID_MAX - 1 && remaining > 0;
+                                        return (
+                                            <div
+                                                key={index}
+                                                className="photo-tile"
+                                            >
+                                                <img src={image} alt={`${temple.name} photo ${index + 1}`} />
+                                                <div className="photo-tile-overlay">
+                                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                                                </div>
+                                                {isLastAndMore && (
+                                                    <div className="photo-tile-more">
+                                                        <span>+{remaining}</span>
+                                                        <small>more photos</small>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            );
+                        })()}
 
                     </section>
 
