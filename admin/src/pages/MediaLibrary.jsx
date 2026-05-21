@@ -4,9 +4,9 @@ import { useAuth } from '../context/AuthContext'
 import ConfirmDialog from '../components/ConfirmDialog'
 
 const FOLDERS = [
-  { key: 'gallery',       label: 'Gallery Images',       icon: 'fas fa-images',      endpoint: '/api/admin/media',              uploadEndpoint: '/api/admin/media/upload', uploadField: 'images', readOnly: false, description: 'Shown on the public About page gallery' },
-  { key: 'temple-monks',  label: 'Temple Chief Monks',   icon: 'fas fa-place-of-worship', endpoint: '/api/admin/media/temple-monks', uploadEndpoint: null, uploadField: null, readOnly: true, description: 'Uploaded automatically from the Temple form chief-monk photo field — manage photos from the Temples section' },
-  { key: 'monks',         label: 'Monk Profile Photos',  icon: 'fas fa-user-circle', endpoint: '/api/admin/media/monks',         uploadEndpoint: null, uploadField: null, readOnly: true, description: 'Uploaded automatically when saving a monk profile — manage photos from the Monks section' },
+  { key: 'gallery',       label: 'Gallery Images',       icon: 'fas fa-images',           endpoint: '/api/admin/media',              uploadEndpoint: '/api/admin/media/upload', uploadField: 'images', description: 'Shown on the public About page gallery' },
+  { key: 'temple-monks',  label: 'Temple Chief Monks',   icon: 'fas fa-place-of-worship',  endpoint: '/api/admin/media/temple-monks', uploadEndpoint: null,                      uploadField: null,    description: 'Chief-monk photos uploaded from the Temple form' },
+  { key: 'monks',         label: 'Monk Profile Photos',  icon: 'fas fa-user-circle',       endpoint: '/api/admin/media/monks',        uploadEndpoint: null,                      uploadField: null,    description: 'Profile photos uploaded from the Monk form' },
 ]
 
 function formatSize(bytes) {
@@ -205,7 +205,7 @@ export default function MediaLibrary() {
           <h1 style={S.title}>Media Library</h1>
           <p style={S.desc}>Manage uploaded images by folder</p>
         </div>
-        {!folder.readOnly && (
+        {folder.uploadEndpoint && (
           <>
             <button className="btn-primary-action" onClick={() => fileRef.current.click()} disabled={uploading}>
               {uploading
@@ -229,10 +229,10 @@ export default function MediaLibrary() {
       </div>
 
       {/* Folder info banner */}
-      <div style={S.folderBanner(folder.readOnly)}>
-        <i className={folder.readOnly ? 'fas fa-lock' : 'fas fa-info-circle'} />
+      <div style={S.folderBanner(false)}>
+        <i className='fas fa-info-circle' />
         <span>{folder.description}</span>
-        {folder.readOnly && (
+        {!folder.uploadEndpoint && (
           <a
             href={folder.key === 'temple-monks' ? '/temples' : '/monks'}
             style={{ marginLeft: 'auto', color: 'var(--brown-600, #7c4f2b)', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none' }}
@@ -259,10 +259,10 @@ export default function MediaLibrary() {
             <div style={S.empty}>
               <div><i className={folder.icon} style={S.emptyIcon} /></div>
               <p style={S.emptyText}>
-                {folder.readOnly
-                  ? folder.key === 'temple-monks'
-                    ? 'No temple chief-monk photos yet. Upload a photo in the Temple form.'
-                    : 'No monk profile photos yet. Upload a photo when saving a monk profile.'
+                {folder.key === 'temple-monks'
+                  ? 'No temple chief-monk photos yet. Upload a photo in the Temple form.'
+                  : folder.key === 'monks'
+                  ? 'No monk profile photos yet. Upload a photo when saving a monk profile.'
                   : 'No images yet. Upload some!'}
               </p>
             </div>
@@ -295,21 +295,19 @@ export default function MediaLibrary() {
               {copied ? '✓ Copied!' : '📋 Copy URL'}
             </button>
 
-            {!folder.readOnly && (
-              <button
-                onClick={() => handleDelete(selected)}
-                disabled={deleting === selected.publicId}
-                style={S.deleteBtn}
-              >
-                {deleting === selected.publicId ? 'Deleting…' : '🗑 Delete Image'}
-              </button>
-            )}
+            <button
+              onClick={() => handleDelete(selected)}
+              disabled={deleting === selected.publicId}
+              style={S.deleteBtn}
+            >
+              {deleting === selected.publicId ? 'Deleting…' : '🗑 Delete Image'}
+            </button>
 
-            {folder.readOnly && (
+            {!folder.uploadEndpoint && (
               <p style={{ fontSize: '0.75rem', color: 'var(--text-3)', textAlign: 'center', marginTop: '0.5rem' }}>
                 {folder.key === 'temple-monks'
-                  ? 'To remove this photo, edit the temple.'
-                  : 'To remove this photo, edit the monk profile.'}
+                  ? 'Also update the temple to remove the reference.'
+                  : 'Also update the monk profile to remove the reference.'}
               </p>
             )}
           </div>
