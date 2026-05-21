@@ -1,5 +1,13 @@
-export const fallbackTempleImage =
-    "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=900&q=80";
+import templeFallback from '../assets/templeImageFallback/templeFallback.jpg';
+import userFallback from '../assets/templeImageFallback/user.png';
+
+export const fallbackTempleImage = templeFallback;
+export const fallbackMonkImage = userFallback;
+
+const isUsableImageUrl = (value) => {
+    const imageUrl = String(value || "").trim();
+    return imageUrl && !imageUrl.toLowerCase().includes("revoked");
+};
 
 export const normalizeStateName = (state) => {
     if (state === "DC" || state === "D.C.") return "District of Columbia";
@@ -9,14 +17,18 @@ export const normalizeStateName = (state) => {
 export const normalizeTemple = (temple) => {
     const lat = temple.lat ?? temple.location?.lat;
     const lng = temple.lng ?? temple.location?.lng;
+    const mainImage = isUsableImageUrl(temple.mainImage) ? temple.mainImage.trim() : "";
+    const imageUrl = isUsableImageUrl(temple.imageUrl) ? temple.imageUrl.trim() : "";
+    const chiefMonkImage = isUsableImageUrl(temple.chiefMonkImage) ? temple.chiefMonkImage.trim() : "";
+    const monkImage = isUsableImageUrl(temple.monkImage) ? temple.monkImage.trim() : "";
     const gallery = temple.galleryImages?.length
-        ? temple.galleryImages
+        ? temple.galleryImages.filter(isUsableImageUrl)
         : temple.images?.length
-            ? temple.images
-            : temple.mainImage
-                ? [temple.mainImage]
+            ? temple.images.filter(isUsableImageUrl)
+            : mainImage
+                ? [mainImage]
                 : temple.gallery?.length
-                    ? temple.gallery
+                    ? temple.gallery.filter(isUsableImageUrl)
                     : [];
 
     return {
@@ -26,9 +38,10 @@ export const normalizeTemple = (temple) => {
         region: temple.regionTag || temple.region || "Other",
         contact: temple.phone || temple.contact || "",
         description: temple.overview || temple.description || "",
-        imageUrl: temple.mainImage || temple.imageUrl || gallery[0] || fallbackTempleImage,
+        mainImage,
+        imageUrl: mainImage || imageUrl || gallery[0] || fallbackTempleImage,
         gallery,
-        monkImage: temple.chiefMonkImage || temple.monkImage || temple.mainImage || gallery[0] || fallbackTempleImage,
+        monkImage: chiefMonkImage || monkImage || fallbackMonkImage,
         lat: lat === null || lat === undefined || lat === "" ? null : Number(lat),
         lng: lng === null || lng === undefined || lng === "" ? null : Number(lng),
     };
