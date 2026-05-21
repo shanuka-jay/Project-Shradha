@@ -1,0 +1,261 @@
+/* ============================================================
+   GalleryLightbox.css  —  True full-viewport photo viewer
+   ============================================================ */
+
+.lightbox-backdrop {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 99999 !important;
+    background: rgba(6, 4, 2, 0.96);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box;
+    overflow: hidden;
+    animation: lightbox-open 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes lightbox-open {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* ── Close button ─────────────────────────────────────────── */
+.lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 22px;
+    width: 42px;
+    height: 42px;
+    border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+    z-index: 10;
+    flex-shrink: 0;
+}
+
+.lightbox-close:hover {
+    background: rgba(255,255,255,0.18);
+    color: #fff;
+    transform: scale(1.08) rotate(90deg);
+    border-color: rgba(255,255,255,0.4);
+}
+
+/* ── Counter ──────────────────────────────────────────────── */
+.lightbox-counter {
+    position: absolute;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.5);
+    user-select: none;
+    white-space: nowrap;
+}
+
+.lightbox-counter span {
+    opacity: 0.35;
+    margin: 0 3px;
+}
+
+/* ── Stage (image + arrows) ───────────────────────────────── */
+.lightbox-stage {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 70px 80px 16px;
+    box-sizing: border-box;
+}
+
+/* ── Image wrapper ────────────────────────────────────────── */
+.lightbox-image-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    animation: lightbox-img-enter 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes lightbox-img-enter {
+    from { opacity: 0; transform: scale(0.96); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+.lightbox-image-wrap--next {
+    animation: lightbox-slide-next 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.lightbox-image-wrap--prev {
+    animation: lightbox-slide-prev 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes lightbox-slide-next {
+    from { opacity: 0; transform: translateX(32px) scale(0.97); }
+    to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes lightbox-slide-prev {
+    from { opacity: 0; transform: translateX(-32px) scale(0.97); }
+    to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+/* The image fills as much space as possible */
+.lightbox-image {
+    max-width: 100%;
+    max-height: calc(100vh - 190px);
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 3px;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04);
+    user-select: none;
+    display: block;
+}
+
+/* ── Navigation arrows ────────────────────────────────────── */
+.lightbox-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 50%;
+    background: rgba(255,255,255,0.07);
+    color: rgba(255,255,255,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, color 0.2s ease;
+    z-index: 5;
+    flex-shrink: 0;
+}
+
+.lightbox-arrow--prev { left: 20px; }
+.lightbox-arrow--next { right: 20px; }
+
+.lightbox-arrow:hover {
+    background: rgba(193, 154, 59, 0.25);
+    border-color: rgba(193, 154, 59, 0.6);
+    color: #e8c96a;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.lightbox-arrow:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+/* ── Thumbnail strip ──────────────────────────────────────── */
+.lightbox-thumbs {
+    flex-shrink: 0;
+    display: flex;
+    gap: 8px;
+    padding: 12px 24px 20px;
+    overflow-x: auto;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    scrollbar-width: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.lightbox-thumbs::-webkit-scrollbar {
+    display: none;
+}
+
+.lightbox-thumb {
+    flex-shrink: 0;
+    width: 62px;
+    height: 44px;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 2px solid transparent;
+    cursor: pointer;
+    opacity: 0.4;
+    transition: opacity 0.22s ease, border-color 0.22s ease, transform 0.22s ease;
+    padding: 0;
+    background: none;
+}
+
+.lightbox-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+}
+
+.lightbox-thumb:hover {
+    opacity: 0.75;
+    transform: translateY(-2px);
+}
+
+.lightbox-thumb--active {
+    opacity: 1;
+    border-color: #c19a3b;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(193, 154, 59, 0.35);
+}
+
+/* ── Mobile ───────────────────────────────────────────────── */
+@media (max-width: 600px) {
+    .lightbox-stage {
+        padding: 60px 56px 12px;
+    }
+
+    .lightbox-arrow {
+        width: 40px;
+        height: 40px;
+    }
+
+    .lightbox-arrow--prev { left: 10px; }
+    .lightbox-arrow--next { right: 10px; }
+
+    .lightbox-image {
+        max-height: calc(100vh - 170px);
+    }
+
+    .lightbox-thumb {
+        width: 48px;
+        height: 34px;
+    }
+}
+
+/* ── Reduced motion ───────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .lightbox-backdrop,
+    .lightbox-image-wrap,
+    .lightbox-image-wrap--next,
+    .lightbox-image-wrap--prev {
+        animation: none;
+    }
+
+    .lightbox-arrow,
+    .lightbox-thumb,
+    .lightbox-close {
+        transition: none;
+    }
+}
