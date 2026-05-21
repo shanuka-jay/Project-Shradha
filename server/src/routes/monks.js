@@ -3,6 +3,7 @@ const router  = express.Router();
 const prisma  = require('../prismaClient');
 const { requireAdmin } = require('../middleware/auth');
 const { normalizeImageUrl, serializeJsonArray, parseJsonArray, serializeJsonObject, parseJsonObject } = require('../utils/imageUrls');
+const { deleteImage } = require('../services/localFileService');
 
 function buildMonkData(body) {
   const { legalName, displayName, titles, role, dateOfBirth, ordinationDate,
@@ -65,13 +66,24 @@ router.put('/:id', requireAdmin, async (req, res) => {
 });
 
 router.patch('/:id/photo', requireAdmin, async (req, res) => {
-  try { res.json(fmt(await prisma.monk.update({ where: { id: req.params.id }, data: { profilePhoto: normalizeImageUrl(req.body.profilePhoto) } }))); }
-  catch (err) { res.status(500).json({ error: err.message }); }
+  try {
+    const old = await prisma.monk.findUnique({ where: { id: req.params.id }, select: { profilePhoto: true } });
+    if (old?.profilePhoto) {
+      await deleteImage(old.profilePhoto.replace(/^\/uploads\//, '')).catch(() => {});
+    }
+    res.json(fmt(await prisma.monk.update({ where: { id: req.params.id }, data: { profilePhoto: normalizeImageUrl(req.body.profilePhoto) } })));
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 router.delete('/:id', requireAdmin, async (req, res) => {
-  try { await prisma.monk.delete({ where: { id: req.params.id } }); res.json({ message: 'Monk profile deleted' }); }
-  catch (err) { res.status(500).json({ error: err.message }); }
+  try {
+    const monk = await prisma.monk.findUnique({ where: { id: req.params.id } });
+    if (monk?.profilePhoto) {
+      await deleteImage(monk.profilePhoto.replace(/^\/uploads\//, '')).catch(() => {});
+    }
+    await prisma.monk.delete({ where: { id: req.params.id } });
+    res.json({ message: 'Monk profile deleted' });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 module.exports = router;
