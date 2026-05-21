@@ -7,7 +7,7 @@ const prisma = require('../prismaClient');
 const { requireAdmin } = require('../middleware/auth');
 const { normalizeImageUrl, normalizeImageUrlArray, serializeJsonArray, parseJsonArray } = require('../utils/imageUrls');
 const { handleImageUpload } = require('../middleware/upload');
-const { uploadTempleMonkPhoto, uploadMonkPhoto } = require('../services/localFileService');
+const { uploadTempleMonkPhoto, uploadMonkPhoto, deleteImage } = require('../services/localFileService');
 
 function fmtTemple(t) {
   if (!t) return t;
@@ -308,6 +308,10 @@ router.patch('/temples/:id/history', requireAdmin, async (req, res) => {
 router.patch('/temples/:id/main-image', requireAdmin, async (req, res) => {
   try {
     const { mainImage } = req.body;
+    const old = await prisma.temple.findUnique({ where: { id: req.params.id }, select: { mainImage: true } });
+    if (old?.mainImage) {
+      await deleteImage(old.mainImage.replace(/^\/uploads\//, '')).catch(() => {});
+    }
     const temple = await prisma.temple.update({
       where: { id: req.params.id },
       data: { mainImage: normalizeImageUrl(mainImage) },
@@ -319,6 +323,10 @@ router.patch('/temples/:id/main-image', requireAdmin, async (req, res) => {
 router.patch('/temples/:id/chief-monk-image', requireAdmin, async (req, res) => {
   try {
     const { chiefMonkImage } = req.body;
+    const old = await prisma.temple.findUnique({ where: { id: req.params.id }, select: { chiefMonkImage: true } });
+    if (old?.chiefMonkImage) {
+      await deleteImage(old.chiefMonkImage.replace(/^\/uploads\//, '')).catch(() => {});
+    }
     const temple = await prisma.temple.update({
       where: { id: req.params.id },
       data: { chiefMonkImage: normalizeImageUrl(chiefMonkImage) },
@@ -330,6 +338,16 @@ router.patch('/temples/:id/chief-monk-image', requireAdmin, async (req, res) => 
 router.patch('/temples/:id/gallery', requireAdmin, async (req, res) => {
   try {
     const { galleryImages } = req.body;
+    const old = await prisma.temple.findUnique({ where: { id: req.params.id }, select: { galleryImages: true } });
+    if (old?.galleryImages) {
+      const oldUrls = JSON.parse(old.galleryImages || '[]');
+      const newUrls = new Set(normalizeImageUrlArray(galleryImages));
+      for (const url of oldUrls) {
+        if (!newUrls.has(url)) {
+          await deleteImage(url.replace(/^\/uploads\//, '')).catch(() => {});
+        }
+      }
+    }
     const temple = await prisma.temple.update({
       where: { id: req.params.id },
       data: { galleryImages: serializeJsonArray(normalizeImageUrlArray(galleryImages)) },
@@ -366,6 +384,16 @@ router.patch('/temples/:id/location', requireAdmin, async (req, res) => {
 
 router.delete('/temples/:id', requireAdmin, async (req, res) => {
   try {
+    const temple = await prisma.temple.findUnique({ where: { id: req.params.id } });
+    if (temple) {
+      const gallery = JSON.parse(temple.galleryImages || '[]');
+      const images  = JSON.parse(temple.images || '[]');
+      const toDelete = [temple.mainImage, temple.chiefMonkImage, ...gallery, ...images].filter(Boolean);
+      for (const url of toDelete) {
+        const publicId = url.replace(/^\/uploads\//, '');
+        await deleteImage(publicId).catch(() => {});
+      }
+    }
     await prisma.temple.delete({ where: { id: req.params.id } });
     res.json({ message: 'Temple deleted' });
   } catch (err) { res.status(500).json({ error: err.message }); }
