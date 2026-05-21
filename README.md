@@ -78,13 +78,13 @@ Make sure you have both of these installed before continuing:
 
 ## 🚀 Getting Started
 
-Follow these steps in order to get the full system running locally.
+Follow these steps **in order** — every step is required for a working system.
 
 ### Step 1 — Clone the repository
 
 ```bash
 git clone <your-repo-url>
-cd Project-Shradha
+cd Project-Shradha-2
 ```
 
 ### Step 2 — Install dependencies
@@ -97,28 +97,36 @@ npm install --prefix client
 npm install --prefix admin
 ```
 
-### Step 3 — Set up the database
+### Step 3 — Generate the Prisma client
 
 ```bash
 cd server
 npx prisma generate
 ```
 
-### Step 4 — Seed the admin user
+### Step 4 — Create the database tables
+
+```bash
+npm run db:push
+```
+
+> This creates all the required tables in `dev.db`. **You must run this before seeding** — skipping it will cause the next step to fail with a "table does not exist" error.
+
+### Step 5 — Seed the admin user
 
 ```bash
 npm run seed:admin
 ```
 
-> This creates the first admin account. Only run this once.
+> Creates the first admin account (`admin@saddha.org`). Only run this once.
 
-### Step 5 — (Optional) Seed temple data
+### Step 6 — (Optional) Seed temple data
 
 ```bash
 node prisma/seed.js
 ```
 
-> This populates the database with temple entries (without images). Skip this if you want to start with an empty database and add temples manually via the admin panel.
+> Populates the database with 73 Sri Lankan Buddhist temples across the US (no images). Skip this if you prefer to add temples manually through the admin panel.
 
 ---
 
@@ -198,7 +206,7 @@ Run these from inside the `server/` directory:
 | `npm run generate`   | Regenerate the Prisma client                 |
 | `npm run seed:admin` | Create the first admin user (run only once)  |
 
-> ⚠️ Do **not** run `db:push` or `seed:admin` unless you intend to reset or recreate the database.
+> ⚠️ Do **not** re-run `db:push` or `seed:admin` after initial setup — `db:push` will wipe data on schema conflicts and `seed:admin` will attempt to create a duplicate admin.
 
 ### Root-level shortcuts
 
