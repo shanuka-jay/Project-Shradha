@@ -84,7 +84,7 @@ Follow these steps in order to get the full system running locally.
 
 ```bash
 git clone <your-repo-url>
-cd Project-Shradha-2
+cd Project-Shradha
 ```
 
 ### Step 2 — Install dependencies
