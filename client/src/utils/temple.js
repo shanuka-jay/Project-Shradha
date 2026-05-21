@@ -9,6 +9,22 @@ const isUsableImageUrl = (value) => {
     return imageUrl && !imageUrl.toLowerCase().includes("revoked");
 };
 
+const toArray = (value) => {
+    if (Array.isArray(value)) return value;
+    if (!value) return [];
+
+    if (typeof value === "string") {
+        try {
+            const parsed = JSON.parse(value);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch {
+            return [];
+        }
+    }
+
+    return [];
+};
+
 export const normalizeStateName = (state) => {
     if (state === "DC" || state === "D.C.") return "District of Columbia";
     return state || "";
@@ -21,14 +37,17 @@ export const normalizeTemple = (temple) => {
     const imageUrl = isUsableImageUrl(temple.imageUrl) ? temple.imageUrl.trim() : "";
     const chiefMonkImage = isUsableImageUrl(temple.chiefMonkImage) ? temple.chiefMonkImage.trim() : "";
     const monkImage = isUsableImageUrl(temple.monkImage) ? temple.monkImage.trim() : "";
-    const gallery = temple.galleryImages?.length
-        ? temple.galleryImages.filter(isUsableImageUrl)
-        : temple.images?.length
-            ? temple.images.filter(isUsableImageUrl)
+    const galleryImages = toArray(temple.galleryImages);
+    const images = toArray(temple.images);
+    const existingGallery = toArray(temple.gallery);
+    const gallery = galleryImages.length
+        ? galleryImages.filter(isUsableImageUrl)
+        : images.length
+            ? images.filter(isUsableImageUrl)
             : mainImage
                 ? [mainImage]
-                : temple.gallery?.length
-                    ? temple.gallery.filter(isUsableImageUrl)
+                : existingGallery.length
+                    ? existingGallery.filter(isUsableImageUrl)
                     : [];
 
     return {
