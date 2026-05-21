@@ -97,17 +97,57 @@ export default function MapManagement() {
   }
 
   async function handleBulkGeocode() {
-    const toastId = toast.loading('Starting bulk geocode…')
-    try {
-      const res = await fetch('/api/admin/map/bulk-geocode', {
-        method: 'POST', headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await res.json()
-      setBulkResult(data)
-      toast.update(toastId, { render: data?.message || 'Bulk geocode started.', type: 'success', isLoading: false, autoClose: 3000 })
-    } catch (err) {
-      toast.update(toastId, { render: err.message || 'Bulk geocode failed.', type: 'error', isLoading: false, autoClose: 3500 })
+    const targets = missing.filter(t => t.address)
+    if (targets.length === 0) {
+      toast.info('No temples with addresses to geocode.')
+      return
     }
+    const toastId = toast.loading(`Geocoding 0 / ${targets.length}…`)
+    let succeeded = 0, failed = 0
+    const results = []
+
+    for (let i = 0; i < targets.length; i++) {
+      const temple = targets[i]
+      toast.update(toastId, { render: `Geocoding ${i + 1} / ${targets.length}: ${temple.name}…`, isLoading: true })
+      try {
+        const geoRes = await fetch('/api/admin/map/geocode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            address: temple.address,
+            city:    temple.city  || '',
+            zip:     temple.zip   || '',
+            state:   temple.state || '',
+          }),
+        })
+        const geoData = await geoRes.json()
+        if (Number.isFinite(Number(geoData.lat)) && Number.isFinite(Number(geoData.lng))) {
+          const saveRes = await fetch(`/api/admin/map/${temple.id}/coords`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ lat: geoData.lat, lng: geoData.lng }),
+          })
+          if (!saveRes.ok) throw new Error('Failed to save coordinates')
+          setMissing(ms => ms.filter(m => m.id !== temple.id))
+          setTemples(ts => ts.map(t => t.id === temple.id ? { ...t, lat: geoData.lat, lng: geoData.lng } : t))
+          succeeded++
+          results.push({ id: temple.id, name: temple.name, address: temple.address, status: 'success' })
+        } else {
+          throw new Error('No coordinates returned')
+        }
+      } catch (err) {
+        failed++
+        results.push({ id: temple.id, name: temple.name, address: temple.address, status: 'failed', error: err.message })
+      }
+    }
+
+    setBulkResult({ message: `Bulk geocode complete: ${succeeded} succeeded, ${failed} failed.`, results })
+    toast.update(toastId, {
+      render: `Done: ${succeeded} geocoded, ${failed} failed.`,
+      type: failed === 0 ? 'success' : succeeded === 0 ? 'error' : 'warning',
+      isLoading: false,
+      autoClose: 4000,
+    })
   }
 
   const published = temples.filter(t => t.status === 'published').length
@@ -157,10 +197,10 @@ export default function MapManagement() {
       {missing.length > 0 && (
         <div style={{ background:'#fef2f2', border:'1px solid #fecaca', borderRadius:'var(--radius)', padding:'0.9rem 1.25rem', marginBottom:'1.25rem', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:'0.5rem' }}>
           <div style={{ color:'#b91c1c', fontSize:'0.875rem', fontWeight:500 }}>
-            ⚠ {missing.length} temple{missing.length !== 1 ? 's' : ''} missing GPS coordinates — hidden from public map.
+            <i className="fas fa-exclamation-triangle" style={{ marginRight:'0.4rem' }}></i> {missing.length} temple{missing.length !== 1 ? 's' : ''} missing GPS coordinates — hidden from public map.
           </div>
           <button onClick={() => setActiveTab('missing')} style={{ padding:'0.35rem 0.9rem', background:'#b91c1c', color:'#fff', border:'none', borderRadius:'var(--radius-sm)', fontSize:'0.82rem', cursor:'pointer' }}>
-            Fix Now →
+            Fix Now <i className="fas fa-arrow-right" style={{ marginLeft:'0.3rem' }}></i>
           </button>
         </div>
       )}
@@ -174,7 +214,7 @@ export default function MapManagement() {
         <button style={tabStyle('duplicates')} onClick={() => setActiveTab('duplicates')}>
           <i className="fas fa-map-pin"></i> Duplicate Pins {duplicates.length > 0 && `(${duplicates.length})`}
         </button>
-        <button style={tabStyle('geocode')} onClick={() => setActiveTab('geocode')}>🔍 Bulk Geocode</button>
+        <button style={tabStyle('geocode')} onClick={() => setActiveTab('geocode')}><i className="fas fa-search"></i> Bulk Geocode</button>
       </div>
 
       {/* Overview Tab */}
@@ -224,11 +264,11 @@ export default function MapManagement() {
                           disabled={toggling === t.id}
                           style={{ padding:'0.25rem 0.65rem', border:'1px solid var(--border)', borderRadius:99, fontSize:'0.75rem', cursor:'pointer',
                             background: t.mapVisible ? '#dcfce7' : '#fee2e2', color: t.mapVisible ? '#15803d' : '#b91c1c' }}>
-                          {toggling === t.id ? '…' : t.mapVisible ? '✓ Visible' : '✗ Hidden'}
+                          {toggling === t.id ? <i className="fas fa-spinner fa-spin"></i> : t.mapVisible ? <><i className="fas fa-check" style={{ marginRight:'0.3rem' }}></i>Visible</> : <><i className="fas fa-eye-slash" style={{ marginRight:'0.3rem' }}></i>Hidden</>}
                         </button>
                       </td>
                       <td>
-                        <Link to={`/temples/${t.id}/edit`} className="action-btn action-edit" title="Edit">✎</Link>
+                        <Link to={`/temples/${t.id}/edit`} className="action-btn action-edit" title="Edit"><i className="fas fa-pen"></i></Link>
                       </td>
                     </tr>
                   )
@@ -245,11 +285,11 @@ export default function MapManagement() {
           <div style={{ padding:'1rem 1.25rem', borderBottom:'1px solid var(--border)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
             <span style={{ fontWeight:600, fontSize:'0.9rem' }}>{missing.length} temples need coordinates</span>
             <button onClick={handleBulkGeocode} style={{ padding:'0.45rem 1rem', background:'var(--brown-700)', color:'#fff', border:'none', borderRadius:'var(--radius-sm)', fontSize:'0.82rem', cursor:'pointer' }}>
-              🔍 Scan All for Geocoding
+              <i className="fas fa-search" style={{ marginRight:'0.4rem' }}></i> Scan All for Geocoding
             </button>
           </div>
           {missing.length === 0 ? (
-            <div style={{ padding:'3rem', textAlign:'center', color:'#15803d' }}>✓ All temples have GPS coordinates!</div>
+            <div style={{ padding:'3rem', textAlign:'center', color:'#15803d' }}><i className="fas fa-check-circle" style={{ marginRight:'0.5rem' }}></i> All temples have GPS coordinates!</div>
           ) : (
             <table className="temples-table">
               <thead>
@@ -267,10 +307,10 @@ export default function MapManagement() {
                         {t.address && (
                           <button onClick={() => geocodeTemple(t)} disabled={geocoding[t.id]}
                             style={{ padding:'0.3rem 0.7rem', background:'var(--brown-100)', border:'1px solid var(--border-2)', borderRadius:'var(--radius-sm)', fontSize:'0.78rem', cursor:'pointer', color:'var(--brown-700)' }}>
-                            {geocoding[t.id] ? '🔍…' : '🔍 Geocode'}
+                            {geocoding[t.id] ? <i className="fas fa-spinner fa-spin"></i> : <><i className="fas fa-search" style={{ marginRight:'0.3rem' }}></i>Geocode</>}
                           </button>
                         )}
-                        <Link to={`/temples/${t.id}/edit`} className="action-btn action-edit" title="Edit">✎</Link>
+                        <Link to={`/temples/${t.id}/edit`} className="action-btn action-edit" title="Edit"><i className="fas fa-pen"></i></Link>
                       </div>
                     </td>
                   </tr>
@@ -288,7 +328,7 @@ export default function MapManagement() {
             <span style={{ fontWeight:600, fontSize:'0.9rem' }}>{duplicates.length} duplicate pin cluster{duplicates.length !== 1 ? 's' : ''} detected</span>
           </div>
           {duplicates.length === 0 ? (
-            <div style={{ padding:'3rem', textAlign:'center', color:'#15803d' }}>✓ No duplicate pins detected!</div>
+            <div style={{ padding:'3rem', textAlign:'center', color:'#15803d' }}><i className="fas fa-check-circle" style={{ marginRight:'0.5rem' }}></i> No duplicate pins detected!</div>
           ) : duplicates.map((d, i) => (
             <div key={i} style={{ padding:'1rem 1.25rem', borderBottom:'1px solid var(--border)', display:'flex', gap:'1rem', alignItems:'flex-start', flexWrap:'wrap' }}>
               <div style={{ background:'#fef9c3', border:'1px solid #fde047', borderRadius:'var(--radius-sm)', padding:'0.5rem 0.75rem', fontSize:'0.78rem', color:'#854d0e', whiteSpace:'nowrap' }}>
@@ -300,7 +340,7 @@ export default function MapManagement() {
                     <div style={{ fontWeight:600, fontSize:'0.875rem', marginBottom:'0.25rem' }}>{t.name}</div>
                     <div style={{ fontSize:'0.8rem', color:'var(--text-2)' }}>{t.state}</div>
                     <div style={{ fontSize:'0.75rem', color:'var(--text-3)', fontFamily:'monospace', marginTop:'0.25rem' }}>{t.lat?.toFixed(5)}, {t.lng?.toFixed(5)}</div>
-                    <Link to={`/temples/${t.id}/edit`} style={{ fontSize:'0.78rem', color:'var(--brown-600)', marginTop:'0.4rem', display:'inline-block' }}>Edit →</Link>
+                    <Link to={`/temples/${t.id}/edit`} style={{ fontSize:'0.78rem', color:'var(--brown-600)', marginTop:'0.4rem', display:'inline-block' }}><i className="fas fa-pen" style={{ marginRight:'0.3rem' }}></i>Edit</Link>
                   </div>
                 ))}
               </div>
@@ -320,11 +360,11 @@ export default function MapManagement() {
           <div style={{ display:'flex', gap:'0.75rem', marginBottom:'1.5rem', flexWrap:'wrap' }}>
             <button onClick={handleBulkGeocode}
               style={{ padding:'0.6rem 1.5rem', background:'var(--brown-700)', color:'#fff', border:'none', borderRadius:'var(--radius)', fontWeight:600, cursor:'pointer' }}>
-              🔍 Scan Temples for Geocoding
+              <i className="fas fa-search" style={{ marginRight:'0.4rem' }}></i> Scan Temples for Geocoding
             </button>
             <Link to="/map" onClick={() => setActiveTab('missing')}
               style={{ padding:'0.6rem 1.25rem', border:'1px solid var(--border)', borderRadius:'var(--radius)', fontSize:'0.875rem', color:'var(--text-2)', background:'var(--surface)' }}>
-              ← View Missing Coords
+              <i className="fas fa-arrow-left" style={{ marginRight:'0.4rem' }}></i> View Missing Coords
             </Link>
           </div>
           {bulkResult && (
@@ -338,7 +378,12 @@ export default function MapManagement() {
                       <tr key={r.id}>
                         <td>{r.name}</td>
                         <td style={{ color:'var(--text-2)' }}>{r.address}</td>
-                        <td><span style={{ padding:'0.2rem 0.6rem', background:'#fef9c3', color:'#854d0e', borderRadius:99, fontSize:'0.72rem' }}>Pending</span></td>
+                        <td>
+                          {r.status === 'success'
+                            ? <span style={{ padding:'0.2rem 0.6rem', background:'#dcfce7', color:'#15803d', borderRadius:99, fontSize:'0.72rem' }}><i className="fas fa-check" style={{ marginRight:'0.3rem' }}></i> Geocoded</span>
+                            : <span style={{ padding:'0.2rem 0.6rem', background:'#fee2e2', color:'#b91c1c', borderRadius:99, fontSize:'0.72rem' }} title={r.error}><i className="fas fa-times" style={{ marginRight:'0.3rem' }}></i> Failed</span>
+                          }
+                        </td>
                       </tr>
                     ))}
                   </tbody>

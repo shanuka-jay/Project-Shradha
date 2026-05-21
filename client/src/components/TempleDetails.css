@@ -916,3 +916,67 @@ blockquote:hover {
         transition: none;
     }
 }
+
+/* ── Gallery improvements ────────────────────────────────── */
+
+/* Make tiles keyboard-focusable and show focus ring */
+.photo-tile:focus-visible {
+    outline: 2px solid #c19a3b;
+    outline-offset: 2px;
+    z-index: 1;
+}
+
+/* "More" tile: keep the overlay always visible, but dim on hover for "View all" CTA */
+.photo-tile-more {
+    transition: background 0.3s ease;
+}
+
+.photo-tile:hover .photo-tile-more {
+    background: rgba(22, 14, 6, 0.75);
+}
+
+/* Overlay for "more" tile shows a different expand icon */
+.photo-tile-overlay__count {
+    font-size: 34px;
+    font-weight: 400;
+    font-family: Georgia, serif;
+    line-height: 1;
+    color: #fff;
+}
+
+.photo-tile-overlay__label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.8);
+    margin-top: 6px;
+}
+
+/* "View all photos" button below the grid */
+.gallery-view-all-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    background: transparent;
+    border: 1px solid #d4c4a0;
+    color: #6b5a3e;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    padding: 9px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.22s ease, border-color 0.22s ease, color 0.22s ease, transform 0.22s ease;
+}
+
+.gallery-view-all-btn:hover {
+    background: #f5f0e6;
+    border-color: #c19a3b;
+    color: #9b7a2a;
+    transform: translateY(-1px);
+}
+
+.gallery-view-all-btn svg {
+    opacity: 0.7;
+}
