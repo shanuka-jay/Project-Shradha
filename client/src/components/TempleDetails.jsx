@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import "./TempleDetails.css"
+import GalleryLightbox from './GalleryLightbox';
 
 const SERVICE_ICON_LABELS = {
     sun: "Dhamma service",
@@ -165,6 +166,7 @@ const TempleDetails = ({ temple, onBack }) => {
     const [eventsLoading, setEventsLoading] = useState(false);
     const [eventsError, setEventsError] = useState("");
     const [actionMessage, setActionMessage] = useState("");
+    const [lightboxIndex, setLightboxIndex] = useState(null); // null = closed
 
     useEffect(() => {
         if (!temple?.id) {
@@ -456,28 +458,60 @@ const TempleDetails = ({ temple, onBack }) => {
                             const remaining = allImages.length - GRID_MAX;
 
                             return (
-                                <div className={`photo-grid photo-grid--${Math.min(gridImages.length, GRID_MAX)}`}>
-                                    {gridImages.map((image, index) => {
-                                        const isLastAndMore = index === GRID_MAX - 1 && remaining > 0;
-                                        return (
-                                            <div
-                                                key={index}
-                                                className="photo-tile"
-                                            >
-                                                <img src={image} alt={`${temple.name} photo ${index + 1}`} />
-                                                <div className="photo-tile-overlay">
-                                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
-                                                </div>
-                                                {isLastAndMore && (
-                                                    <div className="photo-tile-more">
-                                                        <span>+{remaining}</span>
-                                                        <small>more photos</small>
+                                <>
+                                    <div className={`photo-grid photo-grid--${Math.min(gridImages.length, GRID_MAX)}`}>
+                                        {gridImages.map((image, index) => {
+                                            const isLastAndMore = index === GRID_MAX - 1 && remaining > 0;
+                                            return (
+                                                <div
+                                                    key={index}
+                                                    className="photo-tile"
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    aria-label={isLastAndMore ? `View all ${allImages.length} photos` : `View photo ${index + 1}`}
+                                                    onClick={() => setLightboxIndex(isLastAndMore ? index : index)}
+                                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setLightboxIndex(index); }}
+                                                >
+                                                    <img src={image} alt={`${temple.name} photo ${index + 1}`} />
+                                                    <div className="photo-tile-overlay">
+                                                        {isLastAndMore ? (
+                                                            <>
+                                                                <span className="photo-tile-overlay__count">+{remaining}</span>
+                                                                <small className="photo-tile-overlay__label">View all photos</small>
+                                                            </>
+                                                        ) : (
+                                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                                                        )}
                                                     </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+                                                    {isLastAndMore && (
+                                                        <div className="photo-tile-more">
+                                                            <span>+{remaining}</span>
+                                                            <small>more photos</small>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    {allImages.length > 0 && (
+                                        <button
+                                            type="button"
+                                            className="gallery-view-all-btn"
+                                            onClick={() => setLightboxIndex(0)}
+                                        >
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                                            View all {allImages.length} photos
+                                        </button>
+                                    )}
+                                    {lightboxIndex !== null && (
+                                        <GalleryLightbox
+                                            images={allImages}
+                                            initialIndex={lightboxIndex}
+                                            templeName={temple.name}
+                                            onClose={() => setLightboxIndex(null)}
+                                        />
+                                    )}
+                                </>
                             );
                         })()}
 
