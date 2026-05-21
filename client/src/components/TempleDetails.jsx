@@ -154,9 +154,28 @@ const getTempleShareUrl = () => {
     return window.location.href;
 };
 
+const toArray = (value) => {
+    if (Array.isArray(value)) return value;
+    if (!value) return [];
+
+    if (typeof value === "string") {
+        try {
+            const parsed = JSON.parse(value);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch {
+            return [];
+        }
+    }
+
+    return [];
+};
+
+const toText = (value) => String(value || "").trim();
+
 const getTempleHeroPhotos = (temple) => {
-    const photos = [temple.imageUrl, ...(temple.gallery || [])]
-        .map((photo) => String(photo || "").trim())
+    const gallery = toArray(temple.gallery);
+    const photos = [temple.imageUrl, ...gallery]
+        .map(toText)
         .filter(Boolean);
 
     return [...new Set(photos)].slice(0, 3);
@@ -246,12 +265,12 @@ const TempleDetails = ({ temple, onBack }) => {
         );
     }
 
-    const templePrograms = (temple.services || [])
+    const templePrograms = toArray(temple.services)
         .map(normalizeService)
         .filter((service) => service?.name?.trim());
     const heroPhotos = getTempleHeroPhotos(temple);
     const phoneHref = getPhoneHref(temple.contact);
-    const emailAddress = String(temple.email || "").trim();
+    const emailAddress = toText(temple.email);
 
     const handleShare = async () => {
         const shareUrl = getTempleShareUrl();
@@ -463,8 +482,8 @@ const TempleDetails = ({ temple, onBack }) => {
                         <h2>Temple Photos</h2>
 
                         {(() => {
-                            const allImages = [temple.imageUrl, ...(temple.gallery || [])]
-                                .map((p) => String(p || "").trim())
+                            const allImages = [temple.imageUrl, ...toArray(temple.gallery)]
+                                .map(toText)
                                 .filter(Boolean)
                                 .filter((v, i, arr) => arr.indexOf(v) === i);
                             const GRID_MAX = 5;
