@@ -15,27 +15,20 @@ const imageUpload = multer({
       cb(new Error('Only JPG, PNG, WEBP, and GIF images are allowed'));
       return;
     }
-
     cb(null, true);
   },
 });
 
 function handleImageUpload(fieldName = 'images', maxCount = 20) {
   const middleware = imageUpload.array(fieldName, maxCount);
-
   return (req, res, next) => {
     middleware(req, res, (error) => {
-      if (error) {
-        res.status(400).json({ error: error.message });
-        return;
-      }
-
+      if (error) return res.status(400).json({ error: error.message });
       next();
     });
   };
 }
 
 module.exports = {
-  imageUpload,
   handleImageUpload,
 };

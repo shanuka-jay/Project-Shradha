@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
+import { toast } from 'react-toastify'
 import { useAuth } from '../context/AuthContext'
+import ConfirmDialog from '../components/ConfirmDialog'
 import './Massages.css'
 
 /* ── Deterministic avatar colour from name ── */
@@ -46,6 +48,7 @@ export default function Messages() {
   const [filterUnread, setFilterUnread] = useState(false)
   const [showArchived, setShowArchived] = useState(false)
   const [page, setPage]                 = useState(1)
+  const [confirm, setConfirm]           = useState(null)
   const limit = 20
 
   async function fetchMessages() {
@@ -60,7 +63,9 @@ export default function Messages() {
       const data = await res.json()
       setMessages(data.messages || [])
       setTotal(data.total || 0)
-    } catch {}
+    } catch {
+      toast.error('Failed to load messages.')
+    }
     finally { setLoading(false) }
   }
 
@@ -74,22 +79,81 @@ export default function Messages() {
     if (selected?.id === id) setSelected(s => ({ ...s, read: true }))
   }
 
-  async function handleArchive(id) {
-    await fetch(`/api/admin/messages/${id}/archive`, {
-      method: 'PATCH', headers: { Authorization: `Bearer ${token}` }
+  function handleArchive(id) {
+    setConfirm({
+      title: 'Archive Message',
+      message: 'This message will be archived and hidden from the main inbox.',
+      confirmLabel: 'Archive',
+      cancelLabel: 'Cancel',
+      onConfirm: () => doArchive(id),
     })
-    setMessages(ms => ms.filter(m => m.id !== id))
-    if (selected?.id === id) setSelected(null)
   }
 
-  async function handleDelete(id) {
-    if (!window.confirm('Permanently delete this message?')) return
-    await fetch(`/api/admin/messages/${id}`, {
-      method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
+  async function doArchive(id) {
+    setConfirm(null)
+    try {
+      const res = await fetch(`/api/admin/messages/${id}/archive`, {
+        method: 'PATCH', headers: { Authorization: `Bearer ${token}` }
+      })
+      if (!res.ok) throw new Error('Archive failed')
+      toast.success('Message archived.')
+      setMessages(ms => ms.filter(m => m.id !== id))
+      if (selected?.id === id) setSelected(null)
+    } catch {
+      toast.error('Failed to archive message.')
+    }
+  }
+
+  function handleUnarchive(id) {
+    setConfirm({
+      title: 'Restore Message',
+      message: 'This message will be restored to the inbox.',
+      confirmLabel: 'Restore',
+      cancelLabel: 'Cancel',
+      onConfirm: () => doUnarchive(id),
     })
-    setMessages(ms => ms.filter(m => m.id !== id))
-    if (selected?.id === id) setSelected(null)
-    setTotal(t => t - 1)
+  }
+
+  async function doUnarchive(id) {
+    setConfirm(null)
+    try {
+      const res = await fetch(`/api/admin/messages/${id}/unarchive`, {
+        method: 'PATCH', headers: { Authorization: `Bearer ${token}` }
+      })
+      if (!res.ok) throw new Error('Restore failed')
+      toast.success('Message restored.')
+      setMessages(ms => ms.filter(m => m.id !== id))
+      if (selected?.id === id) setSelected(null)
+    } catch {
+      toast.error('Failed to restore message.')
+    }
+  }
+
+  function handleDelete(id) {
+    setConfirm({
+      title: 'Delete Message',
+      message: 'This message will be permanently deleted. This cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      variant: 'danger',
+      onConfirm: () => doDelete(id),
+    })
+  }
+
+  async function doDelete(id) {
+    setConfirm(null)
+    try {
+      const res = await fetch(`/api/admin/messages/${id}`, {
+        method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
+      })
+      if (!res.ok) throw new Error('Delete failed')
+      toast.success('Message deleted.')
+      setMessages(ms => ms.filter(m => m.id !== id))
+      if (selected?.id === id) setSelected(null)
+      setTotal(t => t - 1)
+    } catch {
+      toast.error('Failed to delete message.')
+    }
   }
 
   function openMessage(msg) {
@@ -102,6 +166,7 @@ export default function Messages() {
 
   return (
     <div className="messages-page">
+      <ConfirmDialog config={confirm} onClose={() => setConfirm(null)} />
 
       {/* ── Page header ── */}
       <div className="page-header">
@@ -202,7 +267,11 @@ export default function Messages() {
                     <div className="detail-sender-email">{selected.email}</div>
                   </div>
                   <div className="detail-actions">
-                    {!selected.archived && (
+                    {selected.archived ? (
+                      <button className="detail-btn detail-btn-archive" onClick={() => handleUnarchive(selected.id)}>
+                        <i className="fas fa-box-open" /> Restore
+                      </button>
+                    ) : (
                       <button className="detail-btn detail-btn-archive" onClick={() => handleArchive(selected.id)}>
                         <i className="fas fa-archive" /> Archive
                       </button>

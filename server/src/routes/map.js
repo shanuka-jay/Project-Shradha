@@ -62,17 +62,24 @@ router.patch('/:id/coords', requireAdmin, async (req, res) => {
 router.post('/geocode', requireAdmin, async (req, res) => {
   try {
     const address = typeof req.body.address === 'string' ? req.body.address.trim() : '';
+    const city    = typeof req.body.city    === 'string' ? req.body.city.trim()    : '';
+    const zip     = typeof req.body.zip     === 'string' ? req.body.zip.trim()     : '';
+    const state   = typeof req.body.state   === 'string' ? req.body.state.trim()   : '';
 
     if (!address) {
       return res.status(400).json({ error: 'Address is required' });
     }
+
+    // Build the most complete address string possible so OpenCage returns a precise result.
+    // e.g. "123 Main St, Los Angeles, 90001, California, US"
+    const fullAddress = [address, city, zip, state, 'US'].filter(Boolean).join(', ');
 
     const apiKey = process.env.OPENCAGE_KEY;
     if (!apiKey) {
       return res.status(400).json({ error: 'No OPENCAGE_KEY set' });
     }
 
-    const url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(address)}&key=${apiKey}&limit=1&countrycode=us`;
+    const url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(fullAddress)}&key=${apiKey}&limit=1&countrycode=us`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
 

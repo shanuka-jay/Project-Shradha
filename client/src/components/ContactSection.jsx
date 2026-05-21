@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import './ContactSection.css';
 import connectImg from '../assets/images  for home page/connect with us bg.jpg';
 
@@ -59,9 +61,12 @@ const ContactSection = () => {
 
       setStatus('success');
       setForm(EMPTY_FORM);
+      toast.success('Message sent successfully!');
     } catch (err) {
+      const message = err.message || 'Failed to send message. Please try again.';
       setStatus('error');
-      setErrorMsg(err.message || 'Failed to send message. Please try again.');
+      setErrorMsg(message);
+      toast.error(message);
     }
   };
 
@@ -108,13 +113,6 @@ const ContactSection = () => {
           <div className="contact__form-wrap">
             <h3 className="contact__form-title">Send a Message</h3>
             <p className="contact__form-sub">We'll get back to you within 2–3 business days.</p>
-
-            {/* Success banner */}
-            {status === 'success' && (
-              <div className="contact__feedback contact__feedback--success">
-                ✅ Your message was sent! We'll be in touch soon.
-              </div>
-            )}
 
             {/* Error banner */}
             {status === 'error' && (
@@ -222,6 +220,16 @@ const ContactSection = () => {
           </div>
         </div>
       </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        pauseOnHover
+        draggable
+        theme="light"
+      />
     </section>
   );
 };

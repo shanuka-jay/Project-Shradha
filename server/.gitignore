@@ -4,3 +4,10 @@ node_modules
 
 /src/generated/prisma
 
+
+# SQLite database
+prisma/dev.db
+prisma/dev.db-journal
+
+# Local uploaded images
+uploads/

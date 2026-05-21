@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { toast } from 'react-toastify'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
@@ -34,7 +35,9 @@ export default function MapManagement() {
       setTemples(ov || [])
       setMissing(mis.temples || [])
       setDuplicates(dup.duplicates || [])
-    } catch { }
+    } catch {
+      toast.error('Failed to load map data.')
+    }
     finally { setLoading(false) }
   }
 
@@ -42,14 +45,20 @@ export default function MapManagement() {
 
   async function toggleVisibility(id, current) {
     setToggling(id)
+    const toastId = toast.loading(current ? 'Hiding pin…' : 'Showing pin…')
     try {
-      await fetch(`/api/admin/map/${id}/visibility`, {
+      const res = await fetch(`/api/admin/map/${id}/visibility`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ mapVisible: !current }),
       })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Update failed')
       setTemples(ts => ts.map(t => t.id === id ? { ...t, mapVisible: !current } : t))
-    } catch { }
+      toast.update(toastId, { render: current ? 'Pin hidden.' : 'Pin shown.', type: 'success', isLoading: false, autoClose: 2500 })
+    } catch (err) {
+      toast.update(toastId, { render: err.message || 'Failed to update pin visibility.', type: 'error', isLoading: false, autoClose: 3500 })
+    }
     finally { setToggling(null) }
   }
 
@@ -60,30 +69,45 @@ export default function MapManagement() {
       const res = await fetch('/api/admin/map/geocode', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ address: `${temple.address}, ${temple.state}` }),
+        body: JSON.stringify({
+          address: temple.address,
+          city:    temple.city  || '',
+          zip:     temple.zip   || '',
+          state:   temple.state || '',
+        }),
       })
       const data = await res.json()
       if (Number.isFinite(Number(data.lat)) && Number.isFinite(Number(data.lng))) {
-        await fetch(`/api/admin/map/${temple.id}/coords`, {
+        const res = await fetch(`/api/admin/map/${temple.id}/coords`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ lat: data.lat, lng: data.lng }),
         })
+        if (!res.ok) throw new Error('Failed to save coordinates')
         setMissing(ms => ms.filter(m => m.id !== temple.id))
         setTemples(ts => ts.map(t => t.id === temple.id ? { ...t, lat: data.lat, lng: data.lng } : t))
+        toast.success('Coordinates updated.')
+      } else {
+        throw new Error('Geocoding failed')
       }
-    } catch { }
+    } catch (err) {
+      toast.error(err.message || 'Geocoding failed.')
+    }
     finally { setGeocoding(g => ({ ...g, [temple.id]: false })) }
   }
 
   async function handleBulkGeocode() {
+    const toastId = toast.loading('Starting bulk geocode…')
     try {
       const res = await fetch('/api/admin/map/bulk-geocode', {
         method: 'POST', headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
       setBulkResult(data)
-    } catch { }
+      toast.update(toastId, { render: data?.message || 'Bulk geocode started.', type: 'success', isLoading: false, autoClose: 3000 })
+    } catch (err) {
+      toast.update(toastId, { render: err.message || 'Bulk geocode failed.', type: 'error', isLoading: false, autoClose: 3500 })
+    }
   }
 
   const published = temples.filter(t => t.status === 'published').length

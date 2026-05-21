@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import { useAuth } from '../context/AuthContext'
 import './TempleForm.css'
 
 const US_STATES = ['Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming','DC']
 
-// Lucide CDN icons used via inline SVG paths
 const SERVICE_ICONS = [
   { id: 'sun',        label: 'Dhamma Service',  path: 'M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41M12 7a5 5 0 100 10 5 5 0 000-10z' },
   { id: 'moon',       label: 'Poya Day',         path: 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z' },
@@ -20,7 +20,6 @@ const SERVICE_ICONS = [
 ]
 
 const TABS = ['Basic Info','Overview','History','Main Image','Chief Monk','Gallery','Services','Location','Settings']
-
 const EMPTY_SERVICE = { name: '', icon: 'sun', time: '' }
 const hasCoordValues = (lat, lng) => Number.isFinite(Number(lat)) && Number.isFinite(Number(lng))
 
@@ -53,23 +52,32 @@ export default function TempleForm() {
   const [loading, setLoading] = useState(false)
   const [sectionLoading, setSectionLoading] = useState('')
   const [fetchLoading, setFetchLoading] = useState(isEdit)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
   const [geocoding, setGeocoding] = useState(false)
   const [mapPreview, setMapPreview] = useState(null)
   const [uploading, setUploading] = useState('')
 
+  // Upload a single image. chiefMonkImage goes to its own folder so it never
+  // leaks into the About page gallery; all other single images go to gallery/.
   async function uploadFile(file, field) {
     setUploading(field)
     try {
       const fd = new FormData()
-      fd.append('images', file)
-      const res = await fetch('/api/admin/media/upload', {
+      const isMonkPhoto = field === 'chiefMonkImage'
+      if (isMonkPhoto) {
+        fd.append('image', file)
+      } else {
+        fd.append('images', file)
+      }
+      const endpoint = isMonkPhoto
+        ? '/api/admin/temples/upload-monk-photo'
+        : '/api/admin/media/upload'
+      const res = await fetch(endpoint, {
         method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd,
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Upload failed')
-      const url = data.files[0]?.url || ''
+      // /upload returns { files: [{url}] }; /upload-monk-photo returns { url }
+      const url = data.url || data.files?.[0]?.url || ''
       return url
     } finally { setUploading('') }
   }
@@ -77,16 +85,21 @@ export default function TempleForm() {
   async function handleSingleImageUpload(e, field) {
     const file = e.target.files?.[0]
     if (!file) return
+    const toastId = toast.loading('Uploading image…')
     try {
       const url = await uploadFile(file, field)
       setForm(f => ({ ...f, [field]: url }))
-    } catch (err) { setError(err.message) }
+      toast.update(toastId, { render: 'Image uploaded!', type: 'success', isLoading: false, autoClose: 2500 })
+    } catch (err) {
+      toast.update(toastId, { render: err.message || 'Upload failed.', type: 'error', isLoading: false, autoClose: 3500 })
+    }
   }
 
   async function handleGalleryUpload(files) {
     if (!files || files.length === 0) return
     const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'))
-    if (!imageFiles.length) { setError('Images only'); return }
+    if (!imageFiles.length) { toast.warning('Please select image files only.'); return }
+    const toastId = toast.loading(`Uploading ${imageFiles.length} image${imageFiles.length > 1 ? 's' : ''}…`)
     setUploading('gallery')
     try {
       const fd = new FormData()
@@ -98,7 +111,10 @@ export default function TempleForm() {
       if (!res.ok) throw new Error(data.error || 'Upload failed')
       const newUrls = (data.files || []).map(f => f.url)
       setForm(f => ({ ...f, galleryImages: [...(f.galleryImages || []), ...newUrls] }))
-    } catch (err) { setError(err.message) }
+      toast.update(toastId, { render: `${newUrls.length} image${newUrls.length > 1 ? 's' : ''} added to gallery.`, type: 'success', isLoading: false, autoClose: 2500 })
+    } catch (err) {
+      toast.update(toastId, { render: err.message || 'Gallery upload failed.', type: 'error', isLoading: false, autoClose: 3500 })
+    }
     finally { setUploading('') }
   }
 
@@ -109,7 +125,6 @@ export default function TempleForm() {
         const res = await fetch(`/api/admin/temples/${id}`, { headers: { Authorization: `Bearer ${token}` } })
         if (!res.ok) throw new Error('Temple not found')
         const data = await res.json()
-        // Parse services
         const services = (data.services || []).map(s => {
           try { return JSON.parse(s) } catch { return { name: s, icon: 'sun', time: '' } }
         })
@@ -133,24 +148,34 @@ export default function TempleForm() {
           regionTag: data.regionTag || '',
           mapVisible: data.mapVisible !== false,
         })
-        if (hasCoordValues(data.lat, data.lng)) setMapPreview({ lat: data.lat, lng: data.lng })
-      } catch (err) { setError(err.message) }
+        if (hasCoordValues(data.lat, data.lng)) setMapPreview({ lat: Number(data.lat), lng: Number(data.lng) })
+      } catch (err) {
+        toast.error(err.message || 'Failed to load temple.')
+      }
       finally { setFetchLoading(false) }
     }
     load()
   }, [id])
 
   function handleChange(e) {
-    const val = e.target.type === 'checkbox' ? e.target.checked : e.target.value
-    setForm(f => ({ ...f, [e.target.name]: val }))
-    setError(''); setSuccess('')
+    const { name, type, checked, value } = e.target
+    const val = type === 'checkbox' ? checked : value
+    setForm(f => ({ ...f, [name]: val }))
   }
 
-  // Section-level save for edit mode
+  // Auto-update map preview whenever lat/lng in form changes
+  useEffect(() => {
+    if (hasCoordValues(form.lat, form.lng)) {
+      setMapPreview({ lat: parseFloat(form.lat), lng: parseFloat(form.lng) })
+    } else if (form.lat === '' && form.lng === '') {
+      // Don't clear preview if coords were loaded from server (they'd already be set)
+    }
+  }, [form.lat, form.lng])
+
   async function saveSection(section, payload) {
     if (!isEdit) return
     setSectionLoading(section)
-    setError(''); setSuccess('')
+    const toastId = toast.loading('Saving…')
     try {
       const res = await fetch(`/api/admin/temples/${id}/${section}`, {
         method: 'PATCH',
@@ -159,36 +184,52 @@ export default function TempleForm() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Save failed')
-      setSuccess('Saved!')
-      setTimeout(() => setSuccess(''), 2000)
-    } catch (err) { setError(err.message) }
+      toast.update(toastId, { render: 'Section saved!', type: 'success', isLoading: false, autoClose: 2000 })
+    } catch (err) {
+      toast.update(toastId, { render: err.message || 'Save failed.', type: 'error', isLoading: false, autoClose: 3500 })
+    }
     finally { setSectionLoading('') }
   }
 
   async function handleGeocode() {
-    if (!form.address) { setError('Enter an address first'); return }
+    if (!form.address) { toast.warning('Enter an address first.'); return }
     setGeocoding(true)
+    const toastId = toast.loading('Geocoding address…')
     try {
       const res = await fetch('/api/admin/map/geocode', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ address: `${form.address}, ${form.state}` }),
+        // Send every field we have so the server can build the most precise query possible
+        body: JSON.stringify({
+          address: form.address,
+          city:    form.city  || '',
+          zip:     form.zip   || '',
+          state:   form.state || '',
+        }),
       })
       const data = await res.json()
       if (hasCoordValues(data.lat, data.lng)) {
         setForm(f => ({ ...f, lat: String(data.lat), lng: String(data.lng) }))
-        setMapPreview({ lat: data.lat, lng: data.lng })
-        setSuccess(`Geocoded: ${data.formatted}`)
-      } else { setError(data.error || 'Could not geocode') }
-    } catch (err) { setError(err.message) }
+        // Auto-show the map preview so the admin can verify the pin before saving
+        setMapPreview({ lat: Number(data.lat), lng: Number(data.lng) })
+        toast.update(toastId, { render: `Geocoded: ${data.formatted} — please verify the pin below before saving.`, type: 'success', isLoading: false, autoClose: 4000 })
+      } else {
+        throw new Error(data.error || 'Could not geocode address.')
+      }
+    } catch (err) {
+      toast.update(toastId, { render: err.message || 'Geocoding failed.', type: 'error', isLoading: false, autoClose: 3500 })
+    }
     finally { setGeocoding(false) }
   }
 
   async function handleSubmit(e) {
     e.preventDefault()
-    setError(''); setSuccess('')
-    if (!form.name.trim() || !form.state.trim()) { setError('Temple name and state are required.'); return }
+    if (!form.name.trim() || !form.state.trim()) {
+      toast.error('Temple name and state are required.')
+      return
+    }
     setLoading(true)
+    const toastId = toast.loading(isEdit ? 'Saving changes…' : 'Creating temple…')
     try {
       const payload = {
         ...form,
@@ -205,9 +246,14 @@ export default function TempleForm() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Save failed')
-      setSuccess(isEdit ? 'Temple updated successfully.' : 'Temple created successfully.')
+      toast.update(toastId, {
+        render: isEdit ? 'Temple updated successfully!' : 'Temple created successfully!',
+        type: 'success', isLoading: false, autoClose: 2500,
+      })
       if (!isEdit) setTimeout(() => navigate('/temples'), 1200)
-    } catch (err) { setError(err.message) }
+    } catch (err) {
+      toast.update(toastId, { render: err.message || 'Save failed.', type: 'error', isLoading: false, autoClose: 3500 })
+    }
     finally { setLoading(false) }
   }
 
@@ -238,9 +284,6 @@ export default function TempleForm() {
           <IconSVG path="M19 12H5M12 19l-7-7 7-7" size={14} /> Back to Temples
         </Link>
       </div>
-
-      {error && <div className="form-alert form-alert-error"><IconSVG path="M12 8v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" size={14} /> {error}</div>}
-      {success && <div className="form-alert form-alert-success"><IconSVG path="M20 6L9 17l-5-5" size={14} /> {success}</div>}
 
       <div className="tf-tabs">
         {TABS.map((tab, i) => (
@@ -489,7 +532,7 @@ export default function TempleForm() {
           </div>
         )}
 
-        {/* TAB 6: Services / Programs */}
+        {/* TAB 6: Services */}
         {activeTab === 6 && (
           <div className="tf-panel">
             <div className="tf-panel-header">
@@ -561,7 +604,9 @@ export default function TempleForm() {
                 <IconSVG path="M11 17.25a6.25 6.25 0 1 1 0-12.5 6.25 6.25 0 0 1 0 12.5zM16 16l4.5 4.5" size={14} />
                 {geocoding ? 'Geocoding…' : 'Auto-geocode from Address'}
               </button>
-              <button type="button" className="btn-preview-map" onClick={() => { if (hasCoordValues(form.lat, form.lng)) setMapPreview({ lat: parseFloat(form.lat), lng: parseFloat(form.lng) }) }} disabled={!hasCoordValues(form.lat, form.lng)}>
+              <button type="button" className="btn-preview-map"
+                onClick={() => { if (hasCoordValues(form.lat, form.lng)) setMapPreview({ lat: parseFloat(form.lat), lng: parseFloat(form.lng) }) }}
+                disabled={!hasCoordValues(form.lat, form.lng)}>
                 <IconSVG path="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" size={14} />
                 Preview Pin
               </button>
@@ -579,6 +624,20 @@ export default function TempleForm() {
               <div className="map-placeholder">
                 <IconSVG path="M9 20l-5.447-2.724A1 1 0 0 1 3 16.382V5.618a1 1 0 0 1 1.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0 0 21 18.382V7.618a1 1 0 0 0-.553-.894L15 4m0 13V4m0 0L9 7" size={36} color="var(--muted)" />
                 <p>Enter coordinates or auto-geocode to preview pin</p>
+              </div>
+            )}
+            {isEdit && (
+              <div className="tf-section-actions">
+                <button type="button" className="btn-section-save"
+                  disabled={sectionLoading === 'location'}
+                  onClick={() => saveSection('location', {
+                    lat: form.lat !== '' ? parseFloat(form.lat) : null,
+                    lng: form.lng !== '' ? parseFloat(form.lng) : null,
+                    mapVisible: form.mapVisible,
+                  })}>
+                  <IconSVG path="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z M17 21v-8H7v8 M7 3v5h8" size={14} />
+                  {sectionLoading === 'location' ? 'Saving…' : 'Save Location'}
+                </button>
               </div>
             )}
           </div>
