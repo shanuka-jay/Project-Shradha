@@ -7,6 +7,7 @@ import Contact from './pages/Contact'
 import MapPage from './pages/MapPage'
 import TempleDetailsPage from './pages/TempleDetailsPage'
 import MonkProfile from './pages/MonkProfile'
+import ScrollToTop from './components/ScrollToTop' 
 import './App.css'
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
 
   return (
     <>
+      <ScrollToTop /> 
       {!hideNavbar && <Navbar />}
       <div className="main-content">
         <Routes>
