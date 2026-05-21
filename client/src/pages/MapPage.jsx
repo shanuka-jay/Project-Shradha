@@ -15,11 +15,11 @@ import "../pages/MapPage.css";
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json";
 const worldGeoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
-const globeStart = { rotate: [98, -38, 0], scale: 500 };
-const usaFocus = { rotate: [98, -39, 0], scale: 200 };
+const globeStart = { rotate: [98, -38, 0], scale: 300 };
+const usaFocus = { rotate: [98, -39, 0], scale: 520 };
 const minGlobeScale = 250;
-const maxGlobeScale = 1200;
-const globeFocusDuration = 1200;
+const maxGlobeScale = 760;
+const globeFocusDuration = 760;
 
 const regionOptions = ["All", "Northeast", "South", "Midwest", "West"];
 
@@ -238,7 +238,7 @@ const Map = () => {
         }
 
         setGlobeScale((currentScale) => {
-            const nextScale = currentScale + direction * 100;
+            const nextScale = currentScale + direction * 80;
             return Math.min(maxGlobeScale, Math.max(minGlobeScale, nextScale));
         });
     };
@@ -265,7 +265,7 @@ const Map = () => {
     const handleGlobePointerMove = (event) => {
         if (!dragStart) return;
 
-        const sensitivity = 0.30;
+        const sensitivity = 0.45;
         const nextLng = dragStart.rotate[0] + (event.clientX - dragStart.x) * sensitivity;
         const nextLat = Math.max(
             -80,
