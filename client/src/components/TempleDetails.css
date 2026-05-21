@@ -166,9 +166,7 @@
 }
 
 .details-tabs a,
-.details-tabs button,
-.hero-summary-actions a,
-.hero-summary-actions button {
+.details-tabs button {
     text-decoration: none;
     text-transform: uppercase;
     font-size: 11px;
@@ -178,13 +176,11 @@
     border: none;
     cursor: pointer;
     transition: color 0.22s ease, border-color 0.22s ease, background 0.22s ease, transform 0.22s ease, box-shadow 0.22s ease;
-    border-radius:8px;
+    border-radius: 8px;
 }
 
 .details-tabs a:hover,
-.details-tabs button:hover,
-.hero-summary-actions a:hover,
-.hero-summary-actions button:hover {
+.details-tabs button:hover {
     color: #2c2418;
     transform: translateY(-1px);
 }
@@ -196,25 +192,64 @@
 }
 
 .tab-actions a,
-.tab-actions button,
-.hero-summary-actions a,
-.hero-summary-actions button {
+.tab-actions button {
     border: 1px solid #d9c9a8;
     padding: 10px 14px;
 }
 
-.tab-actions button:last-child,
-.hero-summary-actions button:last-child {
+.tab-actions button:last-child {
     background: #c19a3b;
     color: white;
 }
 
 .tab-actions a:hover,
-.tab-actions button:hover,
-.hero-summary-actions a:hover,
-.hero-summary-actions button:hover {
+.tab-actions button:hover {
     border-color: #c19a3b;
     box-shadow: 0 8px 18px rgba(91, 57, 22, 0.12);
+}
+
+/* ── Hero Action Buttons (Directions / Share / Contact Temple) ── */
+.hero-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-width: 140px;
+    height: 40px;
+    padding: 0 18px;
+    border: 1px solid #d9c9a8;
+    border-radius: 8px;
+    background: #fff;
+    color: #4f4639;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-size: 11px;
+    font-family: Georgia, "Times New Roman", serif;
+    letter-spacing: 1px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.22s ease, border-color 0.22s ease, color 0.22s ease,
+                transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.hero-action-btn:hover {
+    border-color: #c19a3b;
+    color: #2c2418;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(91, 57, 22, 0.12);
+}
+
+.hero-action-btn--primary {
+    background: #c19a3b;
+    border-color: #c19a3b;
+    color: #fff;
+}
+
+.hero-action-btn--primary:hover {
+    background: #9b6826;
+    border-color: #9b6826;
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(91, 57, 22, 0.22);
 }
 
 .details-action-message {
@@ -326,28 +361,105 @@ blockquote:hover {
     transform: translateX(3px);
 }
 
+/* ── Gallery Grid ─────────────────────────────────────── */
 .photo-grid {
     display: grid;
-    grid-template-columns: 1.2fr 1fr 1fr;
-    gap: 6px;
+    gap: 5px;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 200px 200px;
 }
 
-.photo-grid img {
+.photo-grid--1 {
+    grid-template-columns: 1fr;
+    grid-template-rows: 360px;
+}
+
+.photo-grid--2 {
+    grid-template-columns: 1.4fr 1fr;
+    grid-template-rows: 360px;
+}
+.photo-grid--2 .photo-tile:first-child { grid-row: 1; grid-column: 1; }
+.photo-grid--2 .photo-tile:nth-child(2) { grid-row: 1; grid-column: 2; }
+
+.photo-grid--3 {
+    grid-template-columns: 1.4fr 1fr;
+    grid-template-rows: 200px 200px;
+}
+.photo-grid--3 .photo-tile:first-child { grid-row: span 2; }
+
+.photo-grid--4 {
+    grid-template-columns: 1.4fr 1fr 1fr;
+    grid-template-rows: 200px 200px;
+}
+.photo-grid--4 .photo-tile:first-child { grid-row: span 2; grid-column: 1; }
+
+.photo-grid--5 {
+    grid-template-columns: 1.4fr 1fr 1fr;
+    grid-template-rows: 200px 200px;
+}
+.photo-grid--5 .photo-tile:first-child { grid-row: span 2; grid-column: 1; }
+
+.photo-tile {
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    background: #e5ddd0;
+}
+
+.photo-tile img {
     width: 100%;
-    height: 170px;
+    height: 100%;
     object-fit: cover;
-    transition: transform 0.42s var(--details-motion), filter 0.42s ease, box-shadow 0.42s ease;
+    display: block;
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), filter 0.4s ease;
 }
 
-.photo-grid img:hover {
-    transform: scale(1.025);
-    filter: saturate(1.05);
-    box-shadow: 0 14px 30px rgba(44, 36, 24, 0.13);
+.photo-tile:hover img {
+    transform: scale(1.07);
+    filter: brightness(0.82);
 }
 
-.photo-grid img:first-child {
-    height: 346px;
-    grid-row: span 2;
+.photo-tile-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.photo-tile:hover .photo-tile-overlay {
+    opacity: 1;
+}
+
+.photo-tile-more {
+    position: absolute;
+    inset: 0;
+    background: rgba(22, 14, 6, 0.62);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    pointer-events: none;
+    gap: 4px;
+}
+
+.photo-tile-more span {
+    font-size: 32px;
+    font-weight: 400;
+    font-family: Georgia, serif;
+    line-height: 1;
+}
+
+.photo-tile-more small {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0.75;
 }
 
 .event-cards {
