@@ -11,7 +11,7 @@ router.get('/', requireAdmin, async (req, res) => {
     if (status) where.status = status;
     if (type) where.eventType = type;
     if (temple) where.linkedTempleId = temple;
-    if (search) where.title = { contains: search, mode: 'insensitive' };
+    if (search) where.title = { contains: search };
     const [events, total] = await Promise.all([
       prisma.event.findMany({
         where,

@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import "./TempleDetails.css"
+import { fallbackMonkImage, fallbackTempleImage } from "../utils/temple.js";
+import GalleryLightbox from './GalleryLightbox';
 
 const SERVICE_ICON_LABELS = {
     sun: "Dhamma service",
@@ -152,12 +154,45 @@ const getTempleShareUrl = () => {
     return window.location.href;
 };
 
+const toArray = (value) => {
+    if (Array.isArray(value)) return value;
+    if (!value) return [];
+
+    if (typeof value === "string") {
+        try {
+            const parsed = JSON.parse(value);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch {
+            return [];
+        }
+    }
+
+    return [];
+};
+
+const toText = (value) => String(value || "").trim();
+
 const getTempleHeroPhotos = (temple) => {
-    const photos = [temple.imageUrl, ...(temple.gallery || [])]
-        .map((photo) => String(photo || "").trim())
+    const gallery = toArray(temple.gallery);
+    const photos = [temple.imageUrl, ...gallery]
+        .map(toText)
         .filter(Boolean);
 
     return [...new Set(photos)].slice(0, 3);
+};
+
+const handleImageFallback = (event) => {
+    if (event.currentTarget.dataset.fallbackApplied) return;
+
+    event.currentTarget.dataset.fallbackApplied = "true";
+    event.currentTarget.src = fallbackTempleImage;
+};
+
+const handleMonkImageFallback = (event) => {
+    if (event.currentTarget.dataset.fallbackApplied) return;
+
+    event.currentTarget.dataset.fallbackApplied = "true";
+    event.currentTarget.src = fallbackMonkImage;
 };
 
 const TempleDetails = ({ temple, onBack }) => {
@@ -165,6 +200,7 @@ const TempleDetails = ({ temple, onBack }) => {
     const [eventsLoading, setEventsLoading] = useState(false);
     const [eventsError, setEventsError] = useState("");
     const [actionMessage, setActionMessage] = useState("");
+    const [lightboxIndex, setLightboxIndex] = useState(null); // null = closed
 
     useEffect(() => {
         if (!temple?.id) {
@@ -229,12 +265,12 @@ const TempleDetails = ({ temple, onBack }) => {
         );
     }
 
-    const templePrograms = (temple.services || [])
+    const templePrograms = toArray(temple.services)
         .map(normalizeService)
         .filter((service) => service?.name?.trim());
     const heroPhotos = getTempleHeroPhotos(temple);
     const phoneHref = getPhoneHref(temple.contact);
-    const emailAddress = String(temple.email || "").trim();
+    const emailAddress = toText(temple.email);
 
     const handleShare = async () => {
         const shareUrl = getTempleShareUrl();
@@ -311,6 +347,7 @@ const TempleDetails = ({ temple, onBack }) => {
                         <img
                             src={photo}
                             alt={index === 0 ? temple.name : `${temple.name} view ${index + 1}`}
+                            onError={handleImageFallback}
                         />
                     </div>
                 ))}
@@ -324,27 +361,28 @@ const TempleDetails = ({ temple, onBack }) => {
 
                 <div className="hero-summary-actions">
                     <a
-
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-
-                            temple.address
-
-                        )}`}
-
+                        className="hero-action-btn"
+                        href={
+                            Number.isFinite(temple.lat) && Number.isFinite(temple.lng)
+                                ? `https://www.google.com/maps/dir/?api=1&destination=${temple.lat},${temple.lng}`
+                                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(temple.address || temple.name)}`
+                        }
                         target="_blank"
-
                         rel="noreferrer"
-
                     >
-
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
                         Directions
-
                     </a>
 
-                    <button  type="button" onClick={handleShare}>Share</button>
+                    <button className="hero-action-btn" type="button" onClick={handleShare}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                        Share
+                    </button>
 
-                    <button  type="button" onClick={handleContactTemple}>Contact Temple</button>
-
+                    <button className="hero-action-btn hero-action-btn--primary" type="button" onClick={handleContactTemple}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.87a16 16 0 0 0 6.23 6.23l1.76-1.76a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                        Contact Temple
+                    </button>
                 </div>
 
             </section>
@@ -440,31 +478,91 @@ const TempleDetails = ({ temple, onBack }) => {
                     </section>
 
                     <section id="gallery" className="content-section">
-
                         <p className="section-label">Gallery</p>
-
                         <h2>Temple Photos</h2>
 
-                        <div className="photo-grid">
+                        {(() => {
+                            const allImages = [temple.imageUrl, ...toArray(temple.gallery)]
+                                .map(toText)
+                                .filter(Boolean)
+                                .filter((v, i, arr) => arr.indexOf(v) === i);
+                            const GRID_MAX = 5;
+                            const gridImages = allImages.slice(0, GRID_MAX);
+                            const remaining = allImages.length - GRID_MAX;
 
-                            {(temple.gallery || [temple.imageUrl, temple.imageUrl, temple.imageUrl]).map(
+                            if (allImages.length === 0) {
+                                return <p className="program-empty">No photos have been added for this temple yet.</p>;
+                            }
 
-                                (image, index) => (
+                            return (
+                                <>
+                                    <div className={`photo-grid photo-grid--${Math.min(gridImages.length, GRID_MAX)}`}>
+                                        {gridImages.map((image, index) => {
+                                            const isLastAndMore = index === GRID_MAX - 1 && remaining > 0;
 
-                                    <img key={index} src={image} alt={`${temple.name} ${index + 1}`} />
-
-                                )
-
-                            )}
-
-                        </div>
-
+                                            return (
+                                                <div
+                                                    key={image}
+                                                    className="photo-tile"
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    aria-label={isLastAndMore ? `View all ${allImages.length} photos` : `View photo ${index + 1}`}
+                                                    onClick={() => setLightboxIndex(index)}
+                                                    onKeyDown={(event) => {
+                                                        if (event.key === "Enter" || event.key === " ") {
+                                                            event.preventDefault();
+                                                            setLightboxIndex(index);
+                                                        }
+                                                    }}
+                                                >
+                                                    <img
+                                                        src={image}
+                                                        alt={`${temple.name} photo ${index + 1}`}
+                                                        onError={handleImageFallback}
+                                                    />
+                                                    <div className="photo-tile-overlay">
+                                                        {isLastAndMore ? (
+                                                            <>
+                                                                <span className="photo-tile-overlay__count">+{remaining}</span>
+                                                                <small className="photo-tile-overlay__label">View all photos</small>
+                                                            </>
+                                                        ) : (
+                                                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                                                        )}
+                                                    </div>
+                                                    {isLastAndMore && (
+                                                        <div className="photo-tile-more">
+                                                            <span>+{remaining}</span>
+                                                            <small>more photos</small>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="gallery-view-all-btn"
+                                        onClick={() => setLightboxIndex(0)}
+                                    >
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                                        View all {allImages.length} photos
+                                    </button>
+                                    {lightboxIndex !== null && (
+                                        <GalleryLightbox
+                                            images={allImages}
+                                            initialIndex={lightboxIndex}
+                                            templeName={temple.name}
+                                            onClose={() => setLightboxIndex(null)}
+                                        />
+                                    )}
+                                </>
+                            );
+                        })()}
                     </section>
 
                     <section id="events" className="content-section">
-
                         <p className="section-label">Events</p>
-
                         <h2>Upcoming Events</h2>
 
                         {eventsLoading ? (
@@ -498,113 +596,73 @@ const TempleDetails = ({ temple, onBack }) => {
                         ) : (
                             <p className="event-empty">No upcoming events have been added for this temple yet.</p>
                         )}
-
                     </section>
-
                 </article>
 
                 <aside className="details-sidebar">
-
                     <div className="sidebar-card">
-
                         <h3>Contact Information</h3>
-
                         <div className="contact-row">
-
                             <small>Address</small>
-
                             <p>{temple.address}</p>
-
                         </div>
-
                         <div className="contact-row">
-
                             <small>Phone</small>
-
                             <p>{temple.contact}</p>
-
                         </div>
-
                         <div className="contact-row">
-
                             <small>Email</small>
-
                             <p>{temple.email}</p>
-
                         </div>
-
                         <button className="primary-btn" type="button" onClick={handleSendMessage}>
                             Send Message
                         </button>
-
                     </div>
 
                     <div className="sidebar-card monk-card">
-
-                        <img src={temple.monkImage || temple.imageUrl} alt="Chief monk" />
-
+                        <img
+                            src={temple.monkImage || fallbackMonkImage}
+                            alt="Chief monk"
+                            onError={handleMonkImageFallback}
+                        />
                         <h4>{temple.chiefMonk}</h4>
-
                         <small>Chief Monk</small>
-
                         <p>
-
                             Spiritual representative of {temple.name}, supporting Buddhist
-
                             practice and community service.
-
                         </p>
-
                     </div>
 
                     <div className="sidebar-card">
-
                         <h3>Location</h3>
-
                         <div className="map-preview">
-
                             <iframe
-
                                 title={`${temple.name} location`}
-
-                                src={`https://www.google.com/maps?q=${encodeURIComponent(
-
-                                    temple.address
-
-                                )}&output=embed`}
-
+                                src={
+                                    Number.isFinite(temple.lat) && Number.isFinite(temple.lng)
+                                        ? `https://www.google.com/maps?q=${temple.lat},${temple.lng}&output=embed`
+                                        : `https://www.google.com/maps?q=${encodeURIComponent(temple.address || temple.name)}&output=embed`
+                                }
                                 loading="lazy"
-
                                 referrerPolicy="no-referrer-when-downgrade"
-
                             />
-
                         </div>
 
                         <a
-
                             className="primary-link"
-
-                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-
-                                temple.address
-
-                            )}`}
-
+                            href={
+                                Number.isFinite(temple.lat) && Number.isFinite(temple.lng)
+                                    ? `https://www.google.com/maps/dir/?api=1&destination=${temple.lat},${temple.lng}`
+                                    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(temple.address || temple.name)}`
+                            }
                             target="_blank"
-
                             rel="noreferrer"
-
                         >
-
                             Get Directions
-
                         </a>
-
                     </div>
 
                     <div id="programs" className="sidebar-card">
-
                         <h3>Dhamma Programs</h3>
 
                         {templePrograms.length > 0 ? (
@@ -622,19 +680,11 @@ const TempleDetails = ({ temple, onBack }) => {
                         ) : (
                             <p className="program-empty">No programmes have been added for this temple yet.</p>
                         )}
-
                     </div>
-
                 </aside>
-
             </section>
-
-
-
         </main>
-
     );
-
 };
 
 export default TempleDetails;

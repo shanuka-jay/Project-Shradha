@@ -121,6 +121,50 @@
   transition: border-color 0.12s, box-shadow 0.12s;
 }
 
+.settings-password-wrap {
+  position: relative;
+}
+
+.settings-password-wrap input {
+  padding-right: 2.75rem;
+}
+
+.settings-password-toggle {
+  position: absolute;
+  right: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #7a5c38;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.settings-password-toggle svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.settings-password-toggle:hover {
+  background: #f2ede6;
+  color: #3d2a11;
+}
+
+.settings-password-toggle:focus-visible {
+  outline: 2px solid rgba(184,115,51,0.45);
+  outline-offset: 1px;
+}
+
 .form-group input:focus {
   outline: none;
   border-color: var(--brown-400);

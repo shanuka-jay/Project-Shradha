@@ -1,34 +1,27 @@
-// Prisma Schema for Saddha Temple Map
-// Database: MongoDB
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mongodb"
-  url   = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model Temple {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  id             String   @id @default(cuid())
   name           String
   state          String
   address        String?
   chiefMonk      String?
   phone          String?
   email          String?
-  // Content sections - updated separately
   overview       String?
   history        String?
-  // Images - each managed separately
   mainImage      String?
   chiefMonkImage String?
-  galleryImages  String[]
-  // Legacy images array (backwards compat)
-  images         String[]
-  // Services stored as JSON strings: {"name":"Sunday Dhamma","icon":"sun","time":"9:00 AM"}
-  services       String[]
+  galleryImages  String   @default("[]")
+  images         String   @default("[]")
+  services       String   @default("[]")
   lat            Float?
   lng            Float?
   status         String   @default("published")
@@ -41,38 +34,26 @@ model Temple {
 }
 
 model Monk {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-
-  // ── Core identity ────────────────────────────────────────────
+  id             String   @id @default(cuid())
   legalName      String
-  displayName    String?          // Dharma / display name shown publicly
-  titles         String?          // e.g. "Senior Dhamma Teacher · Pali Scholar"
-  role           String?          // e.g. "Abbot", "Chief Incumbent"
-
-  // ── Profile details (left column on public page) ─────────────
-  dateOfBirth    String?          // Free-text, e.g. "5 January 1920"
-  ordinationDate String?          // Free-text, e.g. "24 June 1954 · Received Upasampada"
+  displayName    String?
+  titles         String?
+  role           String?
+  dateOfBirth    String?
+  ordinationDate String?
   nationality    String?
-  residence      String?          // e.g. "Kandy, Sri Lanka"
-  languages      String[]
-
-  // ── About / Biography section ────────────────────────────────
-  biography      String?          // Full multi-paragraph biography
-  quote          String?          // Pull-quote shown in golden block
-
-  // ── Contact & Enquiries section ──────────────────────────────
-  contactInfo    String?          // Legacy / primary email (backwards compat)
-  email          String?          // Explicit email field
-  templePhone    String?          // Temple office phone
-  address        String?          // Physical address for contact section
-  appointment    String?          // e.g. "By prior arrangement only"
-
-  // ── Photo & Social ───────────────────────────────────────────
-  profilePhoto   String?          // Cloudinary URL
-  socialLinks    Json?            // { website, facebook, youtube, wikipedia, pinterest }
-
-  // ── Relations & meta ─────────────────────────────────────────
-  linkedTempleId String?  @db.ObjectId
+  residence      String?
+  languages      String   @default("[]")
+  biography      String?
+  quote          String?
+  contactInfo    String?
+  email          String?
+  templePhone    String?
+  address        String?
+  appointment    String?
+  profilePhoto   String?
+  socialLinks    String?
+  linkedTempleId String?
   temple         Temple?  @relation(fields: [linkedTempleId], references: [id])
   status         String   @default("published")
   createdAt      DateTime @default(now())
@@ -80,13 +61,13 @@ model Monk {
 }
 
 model Event {
-  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  id               String    @id @default(cuid())
   title            String
   dateTime         DateTime
   endDateTime      DateTime?
   eventType        String
   description      String?
-  linkedTempleId   String?   @db.ObjectId
+  linkedTempleId   String?
   temple           Temple?   @relation(fields: [linkedTempleId], references: [id])
   recurring        Boolean   @default(false)
   recurringPattern String?
@@ -96,7 +77,7 @@ model Event {
 }
 
 model Contact {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  id         String   @id @default(cuid())
   firstName  String
   lastName   String
   email      String
@@ -109,7 +90,7 @@ model Contact {
 }
 
 model Admin {
-  id                       String    @id @default(auto()) @map("_id") @db.ObjectId
+  id                       String    @id @default(cuid())
   name                     String
   email                    String    @unique
   passwordHash             String
@@ -122,7 +103,7 @@ model Admin {
 }
 
 model SiteSettings {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String   @id @default(cuid())
   key       String   @unique
   value     String
   updatedAt DateTime @updatedAt

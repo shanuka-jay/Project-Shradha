@@ -1,5 +1,7 @@
 import { Fragment, useState, useEffect } from 'react'
+import { toast } from 'react-toastify'
 import { useAuth } from '../context/AuthContext'
+import ConfirmDialog from '../components/ConfirmDialog'
 import './Settings.css'
 
 export default function Settings() {
@@ -10,17 +12,24 @@ export default function Settings() {
   const [pwForm, setPwForm]       = useState({ currentPassword: '', newPassword: '', confirm: '' })
   const [pwLoading, setPwLoading] = useState(false)
   const [pwError, setPwError]     = useState('')
-  const [pwSuccess, setPwSuccess] = useState('')
 
   /* ── User list ── */
   const [users, setUsers]               = useState([])
   const [usersLoading, setUsersLoading] = useState(false)
 
   /* ── Add new user ── */
-  const [newUser, setNewUser]                 = useState({ name: '', email: '', password: '', role: 'editor' })
-  const [newUserLoading, setNewUserLoading]   = useState(false)
-  const [newUserError, setNewUserError]       = useState('')
-  const [newUserSuccess, setNewUserSuccess]   = useState('')
+  const [newUser, setNewUser]               = useState({ name: '', email: '', password: '', role: 'editor' })
+  const [newUserLoading, setNewUserLoading] = useState(false)
+  const [newUserError, setNewUserError]     = useState('')
+
+  const [confirm, setConfirm] = useState(null)
+  const [showPassword, setShowPassword] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+    newUser: false,
+    editUser: false,
+  })
 
   /* ── Edit user ── */
   const [editingUser, setEditingUser] = useState(null)
@@ -34,13 +43,16 @@ export default function Settings() {
     fetch('/api/admin/settings/users', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(d => { setUsers(Array.isArray(d) ? d : []); setUsersLoading(false) })
-      .catch(() => setUsersLoading(false))
+      .catch(() => {
+        setUsersLoading(false)
+        toast.error('Failed to load admin users.')
+      })
   }, [token, canManageUsers])
 
   /* ── Handlers ── */
   function handlePwChange(e) {
     setPwForm(f => ({ ...f, [e.target.name]: e.target.value }))
-    setPwError(''); setPwSuccess('')
+    setPwError('')
   }
 
   async function handlePwSubmit(e) {
@@ -48,6 +60,7 @@ export default function Settings() {
     if (pwForm.newPassword !== pwForm.confirm) { setPwError('Passwords do not match.'); return }
     if (pwForm.newPassword.length < 8)         { setPwError('Must be at least 8 characters.'); return }
     setPwLoading(true)
+    const toastId = toast.loading('Updating password…')
     try {
       const res  = await fetch('/api/admin/change-password', {
         method: 'PUT',
@@ -56,15 +69,19 @@ export default function Settings() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed')
-      setPwSuccess('Password updated successfully.')
       setPwForm({ currentPassword: '', newPassword: '', confirm: '' })
-    } catch (err) { setPwError(err.message) }
+      setPwError('')
+      toast.update(toastId, { render: 'Password updated successfully.', type: 'success', isLoading: false, autoClose: 2500 })
+    } catch (err) {
+      setPwError(err.message)
+      toast.update(toastId, { render: err.message || 'Password update failed.', type: 'error', isLoading: false, autoClose: 3500 })
+    }
     finally { setPwLoading(false) }
   }
 
   async function handleCreateUser(e) {
     e.preventDefault()
-    setNewUserError(''); setNewUserSuccess('')
+    setNewUserError('')
     setNewUserLoading(true)
     try {
       const res  = await fetch('/api/admin/settings/users', {
@@ -76,33 +93,66 @@ export default function Settings() {
       if (!res.ok) throw new Error(data.error || 'Failed')
       setUsers(u => [...u, data])
       setNewUser({ name: '', email: '', password: '', role: 'editor' })
-      setNewUserSuccess('User created successfully.')
-      setTimeout(() => setNewUserSuccess(''), 3000)
-    } catch (err) { setNewUserError(err.message) }
+      setNewUserError('')
+      toast.success('User created successfully.')
+    } catch (err) {
+      setNewUserError(err.message)
+      toast.error(err.message || 'Failed to create user.')
+    }
     finally { setNewUserLoading(false) }
   }
 
-  async function handleDeleteUser(id) {
-    if (!window.confirm('Delete this user? This cannot be undone.')) return
-    await fetch(`/api/admin/settings/users/${id}`, {
-      method: 'DELETE', headers: { Authorization: `Bearer ${token}` },
+  function handleDeleteUser(id) {
+    setConfirm({
+      title: 'Delete User',
+      message: 'This admin user will be permanently deleted. This cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      variant: 'danger',
+      onConfirm: () => doDeleteUser(id),
     })
-    setUsers(u => u.filter(x => x.id !== id))
-    if (editingUser?.id === id) setEditingUser(null)
+  }
+
+  async function doDeleteUser(id) {
+    setConfirm(null)
+    const toastId = toast.loading('Deleting user…')
+    try {
+      const res = await fetch(`/api/admin/settings/users/${id}`, {
+        method: 'DELETE', headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error('Delete failed')
+      setUsers(u => u.filter(x => x.id !== id))
+      if (editingUser?.id === id) setEditingUser(null)
+      toast.update(toastId, { render: 'User deleted.', type: 'success', isLoading: false, autoClose: 2500 })
+    } catch (err) {
+      toast.update(toastId, { render: err.message || 'Delete failed.', type: 'error', isLoading: false, autoClose: 3500 })
+    }
   }
 
   async function handleRoleChange(id, role) {
-    await fetch(`/api/admin/settings/users/${id}/role`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ role }),
-    })
-    setUsers(u => u.map(x => x.id === id ? { ...x, role } : x))
+    const toastId = toast.loading('Updating role…')
+    try {
+      const res = await fetch(`/api/admin/settings/users/${id}/role`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ role }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed')
+      setUsers(u => u.map(x => x.id === id ? { ...x, role } : x))
+      toast.update(toastId, { render: 'Role updated.', type: 'success', isLoading: false, autoClose: 2500 })
+    } catch (err) {
+      toast.update(toastId, { render: err.message || 'Failed to update role.', type: 'error', isLoading: false, autoClose: 3500 })
+    }
   }
 
   function startEdit(u) {
     setEditingUser({ id: u.id, name: u.name, email: u.email, password: '' })
     setEditError('')
+  }
+
+  function togglePasswordVisibility(field) {
+    setShowPassword(prev => ({ ...prev, [field]: !prev[field] }))
   }
 
   async function handleEditSave(e) {
@@ -113,6 +163,7 @@ export default function Settings() {
       return
     }
     setEditLoading(true)
+    const toastId = toast.loading('Saving user…')
     try {
       const body = { name: editingUser.name, email: editingUser.email }
       if (editingUser.password) body.password = editingUser.password
@@ -125,7 +176,11 @@ export default function Settings() {
       if (!res.ok) throw new Error(data.error || 'Failed to update user')
       setUsers(u => u.map(x => x.id === editingUser.id ? { ...x, name: data.name, email: data.email } : x))
       setEditingUser(null)
-    } catch (err) { setEditError(err.message) }
+      toast.update(toastId, { render: 'User updated.', type: 'success', isLoading: false, autoClose: 2500 })
+    } catch (err) {
+      setEditError(err.message)
+      toast.update(toastId, { render: err.message || 'Update failed.', type: 'error', isLoading: false, autoClose: 3500 })
+    }
     finally { setEditLoading(false) }
   }
 
@@ -180,20 +235,88 @@ export default function Settings() {
         {/* ── Change Password ── */}
         <div className="settings-card">
           <h2 className="settings-card-title">Change Password</h2>
-          {pwError   && <div className="form-alert form-alert-error">⚠ {pwError}</div>}
-          {pwSuccess && <div className="form-alert form-alert-success">✓ {pwSuccess}</div>}
+          {pwError && <div className="form-alert form-alert-error">⚠ {pwError}</div>}
           <form onSubmit={handlePwSubmit}>
             <div style={groupS}>
               <label style={labelS}>Current Password</label>
-              <input style={inputS} type="password" name="currentPassword" value={pwForm.currentPassword} onChange={handlePwChange} required />
+              <div className="settings-password-wrap">
+                <input style={inputS} type={showPassword.current ? 'text' : 'password'} name="currentPassword" value={pwForm.currentPassword} onChange={handlePwChange} required />
+                <button
+                  type="button"
+                  className="settings-password-toggle"
+                  onClick={() => togglePasswordVisibility('current')}
+                  aria-label={showPassword.current ? 'Hide password' : 'Show password'}
+                  title={showPassword.current ? 'Hide password' : 'Show password'}
+                >
+                {showPassword.current ? (
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 3l18 18" />
+                    <path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58" />
+                    <path d="M9.88 5.09A8.8 8.8 0 0 1 12 4.83c5 0 8.5 4.17 9.5 7.17a11.2 11.2 0 0 1-2.06 3.31" />
+                    <path d="M6.1 6.1C4.31 7.32 3.09 9.18 2.5 12c1 3 4.5 7.17 9.5 7.17 1.56 0 2.97-.41 4.18-1.08" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M2.5 12c1-3 4.5-7.17 9.5-7.17S20.5 9 21.5 12c-1 3-4.5 7.17-9.5 7.17S3.5 15 2.5 12z" />
+                    <circle cx="12" cy="12" r="2.8" />
+                  </svg>
+                )}
+              </button>
+              </div>
             </div>
             <div style={groupS}>
               <label style={labelS}>New Password</label>
-              <input style={inputS} type="password" name="newPassword" value={pwForm.newPassword} onChange={handlePwChange} placeholder="Min 8 characters" required />
+              <div className="settings-password-wrap">
+                <input style={inputS} type={showPassword.new ? 'text' : 'password'} name="newPassword" value={pwForm.newPassword} onChange={handlePwChange} placeholder="Min 8 characters" required />
+                <button
+                  type="button"
+                  className="settings-password-toggle"
+                  onClick={() => togglePasswordVisibility('new')}
+                  aria-label={showPassword.new ? 'Hide password' : 'Show password'}
+                  title={showPassword.new ? 'Hide password' : 'Show password'}
+                >
+                {showPassword.new ? (
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 3l18 18" />
+                    <path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58" />
+                    <path d="M9.88 5.09A8.8 8.8 0 0 1 12 4.83c5 0 8.5 4.17 9.5 7.17a11.2 11.2 0 0 1-2.06 3.31" />
+                    <path d="M6.1 6.1C4.31 7.32 3.09 9.18 2.5 12c1 3 4.5 7.17 9.5 7.17 1.56 0 2.97-.41 4.18-1.08" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M2.5 12c1-3 4.5-7.17 9.5-7.17S20.5 9 21.5 12c-1 3-4.5 7.17-9.5 7.17S3.5 15 2.5 12z" />
+                    <circle cx="12" cy="12" r="2.8" />
+                  </svg>
+                )}
+              </button>
+              </div>
             </div>
             <div style={groupS}>
               <label style={labelS}>Confirm New Password</label>
-              <input style={inputS} type="password" name="confirm" value={pwForm.confirm} onChange={handlePwChange} required />
+              <div className="settings-password-wrap">
+                <input style={inputS} type={showPassword.confirm ? 'text' : 'password'} name="confirm" value={pwForm.confirm} onChange={handlePwChange} required />
+                <button
+                  type="button"
+                  className="settings-password-toggle"
+                  onClick={() => togglePasswordVisibility('confirm')}
+                  aria-label={showPassword.confirm ? 'Hide password' : 'Show password'}
+                  title={showPassword.confirm ? 'Hide password' : 'Show password'}
+                >
+                {showPassword.confirm ? (
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 3l18 18" />
+                    <path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58" />
+                    <path d="M9.88 5.09A8.8 8.8 0 0 1 12 4.83c5 0 8.5 4.17 9.5 7.17a11.2 11.2 0 0 1-2.06 3.31" />
+                    <path d="M6.1 6.1C4.31 7.32 3.09 9.18 2.5 12c1 3 4.5 7.17 9.5 7.17 1.56 0 2.97-.41 4.18-1.08" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M2.5 12c1-3 4.5-7.17 9.5-7.17S20.5 9 21.5 12c-1 3-4.5 7.17-9.5 7.17S3.5 15 2.5 12z" />
+                    <circle cx="12" cy="12" r="2.8" />
+                  </svg>
+                )}
+              </button>
+              </div>
             </div>
             <button type="submit" className="btn-save" disabled={pwLoading}>
               {pwLoading ? 'Updating…' : '✓ Update Password'}
@@ -204,6 +327,7 @@ export default function Settings() {
         {/* ── Admin Users & Permissions ── */}
         {canManageUsers && (
         <div className="settings-card settings-card-wide">
+          <ConfirmDialog config={confirm} onClose={() => setConfirm(null)} />
           <h2 className="settings-card-title">Admin Users &amp; Permissions</h2>
 
           {usersLoading ? (
@@ -309,13 +433,36 @@ export default function Settings() {
                                     New Password&nbsp;
                                     <span style={{ fontWeight: 400, color: 'var(--text-3)' }}>(leave blank to keep)</span>
                                   </label>
-                                  <input
-                                    style={inputS}
-                                    type="password"
-                                    value={editingUser.password}
-                                    onChange={e => setEditingUser(ev => ({ ...ev, password: e.target.value }))}
-                                    placeholder="Min 8 chars"
-                                  />
+                                  <div className="settings-password-wrap">
+                                    <input
+                                      style={inputS}
+                                      type={showPassword.editUser ? 'text' : 'password'}
+                                      value={editingUser.password}
+                                      onChange={e => setEditingUser(ev => ({ ...ev, password: e.target.value }))}
+                                      placeholder="Min 8 chars"
+                                    />
+                                    <button
+                                      type="button"
+                                      className="settings-password-toggle"
+                                      onClick={() => togglePasswordVisibility('editUser')}
+                                      aria-label={showPassword.editUser ? 'Hide password' : 'Show password'}
+                                      title={showPassword.editUser ? 'Hide password' : 'Show password'}
+                                    >
+                                    {showPassword.editUser ? (
+                                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M3 3l18 18" />
+                                        <path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58" />
+                                        <path d="M9.88 5.09A8.8 8.8 0 0 1 12 4.83c5 0 8.5 4.17 9.5 7.17a11.2 11.2 0 0 1-2.06 3.31" />
+                                        <path d="M6.1 6.1C4.31 7.32 3.09 9.18 2.5 12c1 3 4.5 7.17 9.5 7.17 1.56 0 2.97-.41 4.18-1.08" />
+                                      </svg>
+                                    ) : (
+                                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M2.5 12c1-3 4.5-7.17 9.5-7.17S20.5 9 21.5 12c-1 3-4.5 7.17-9.5 7.17S3.5 15 2.5 12z" />
+                                        <circle cx="12" cy="12" r="2.8" />
+                                      </svg>
+                                    )}
+                                  </button>
+                                </div>
                                 </div>
                                 <button
                                   type="submit"
@@ -342,8 +489,7 @@ export default function Settings() {
             <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', marginBottom: '1rem', color: 'var(--text)' }}>
               Add New Admin User
             </h3>
-            {newUserError   && <div className="form-alert form-alert-error"   style={{ marginBottom: '0.75rem' }}>⚠ {newUserError}</div>}
-            {newUserSuccess && <div className="form-alert form-alert-success" style={{ marginBottom: '0.75rem' }}>✓ {newUserSuccess}</div>}
+            {newUserError && <div className="form-alert form-alert-error" style={{ marginBottom: '0.75rem' }}>⚠ {newUserError}</div>}
             <form onSubmit={handleCreateUser}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', alignItems: 'end' }}>
                 <div style={groupS}>
@@ -369,14 +515,37 @@ export default function Settings() {
                 </div>
                 <div style={groupS}>
                   <label style={labelS}>Password</label>
-                  <input
-                    style={inputS}
-                    type="password"
-                    value={newUser.password}
-                    onChange={e => setNewUser(u => ({ ...u, password: e.target.value }))}
-                    placeholder="Min 8 chars"
-                    required
-                  />
+                  <div className="settings-password-wrap">
+                    <input
+                      style={inputS}
+                      type={showPassword.newUser ? 'text' : 'password'}
+                      value={newUser.password}
+                      onChange={e => setNewUser(u => ({ ...u, password: e.target.value }))}
+                      placeholder="Min 8 chars"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="settings-password-toggle"
+                      onClick={() => togglePasswordVisibility('newUser')}
+                      aria-label={showPassword.newUser ? 'Hide password' : 'Show password'}
+                      title={showPassword.newUser ? 'Hide password' : 'Show password'}
+                    >
+                    {showPassword.newUser ? (
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M3 3l18 18" />
+                        <path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58" />
+                        <path d="M9.88 5.09A8.8 8.8 0 0 1 12 4.83c5 0 8.5 4.17 9.5 7.17a11.2 11.2 0 0 1-2.06 3.31" />
+                        <path d="M6.1 6.1C4.31 7.32 3.09 9.18 2.5 12c1 3 4.5 7.17 9.5 7.17 1.56 0 2.97-.41 4.18-1.08" />
+                      </svg>
+                    ) : (
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M2.5 12c1-3 4.5-7.17 9.5-7.17S20.5 9 21.5 12c-1 3-4.5 7.17-9.5 7.17S3.5 15 2.5 12z" />
+                        <circle cx="12" cy="12" r="2.8" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
                 </div>
                 <div style={groupS}>
                   <label style={labelS}>Role</label>

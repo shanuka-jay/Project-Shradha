@@ -7,16 +7,17 @@ import Contact from './pages/Contact'
 import MapPage from './pages/MapPage'
 import TempleDetailsPage from './pages/TempleDetailsPage'
 import MonkProfile from './pages/MonkProfile'
+import ScrollToTop from './components/ScrollToTop' 
 import './App.css'
 
 function App() {
   const location = useLocation()
-  const isMapPage = location.pathname === '/map'
-  const isMonkProfile = location.pathname.startsWith('/monks/')
+  const hideNavbar = location.pathname.startsWith('/monks/') || location.pathname.startsWith('/temples/')
 
   return (
     <>
-      {<Navbar />}
+      <ScrollToTop /> 
+      {!hideNavbar && <Navbar />}
       <div className="main-content">
         <Routes>
           <Route path="/"            element={<Home />} />

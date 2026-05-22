@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import { useAuth } from '../context/AuthContext'
+import ConfirmDialog from '../components/ConfirmDialog'
 import './Temples.css'
 
 const US_STATES = ['Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming','DC']
@@ -17,6 +19,7 @@ export default function Temples() {
   const [filterStatus, setFilterStatus] = useState('')
   const [deleting, setDeleting] = useState(null)
   const [toggling, setToggling] = useState(null)
+  const [confirm, setConfirm] = useState(null)
   const limit = 15
 
   async function fetchTemples() {
@@ -30,7 +33,9 @@ export default function Temples() {
       const data = await res.json()
       setTemples(data.temples || [])
       setTotal(data.total || 0)
-    } catch { }
+    } catch {
+      toast.error('Failed to load temples.')
+    }
     finally { setLoading(false) }
   }
 
@@ -40,13 +45,27 @@ export default function Temples() {
     return () => clearTimeout(t)
   }, [search])
 
-  async function handleDelete(id, name) {
-    if (!window.confirm(`Delete "${name}"? This cannot be undone.`)) return
+  function handleDelete(id, name) {
+    setConfirm({
+      title: 'Delete Temple',
+      message: `"${name}" will be permanently removed from the directory. This cannot be undone.`,
+      confirmLabel: 'Yes, Delete',
+      cancelLabel: 'Cancel',
+      variant: 'danger',
+      onConfirm: () => doDelete(id, name),
+    })
+  }
+
+  async function doDelete(id, name) {
     setDeleting(id)
     try {
-      await fetch(`/api/admin/temples/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+      const res = await fetch(`/api/admin/temples/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+      if (!res.ok) throw new Error('Delete failed')
+      toast.success(`"${name}" deleted successfully.`)
       fetchTemples()
-    } catch { }
+    } catch {
+      toast.error(`Failed to delete "${name}".`)
+    }
     finally { setDeleting(null) }
   }
 
@@ -54,13 +73,17 @@ export default function Temples() {
     const newStatus = t.status === 'published' ? 'draft' : 'published'
     setToggling(t.id)
     try {
-      await fetch(`/api/admin/temples/${t.id}`, {
+      const res = await fetch(`/api/admin/temples/${t.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ ...t, status: newStatus, services: t.services || [], images: t.images || [] }),
       })
+      if (!res.ok) throw new Error('Update failed')
       setTemples(ts => ts.map(x => x.id === t.id ? { ...x, status: newStatus } : x))
-    } catch { }
+      toast.success(`"${t.name}" set to ${newStatus}.`)
+    } catch {
+      toast.error(`Failed to update status for "${t.name}".`)
+    }
     finally { setToggling(null) }
   }
 
@@ -68,6 +91,8 @@ export default function Temples() {
 
   return (
     <div className="temples-page">
+      <ConfirmDialog config={confirm} onClose={() => setConfirm(null)} />
+
       <div className="page-header">
         <div>
           <h1 className="page-title">Temples</h1>

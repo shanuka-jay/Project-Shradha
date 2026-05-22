@@ -1,237 +1,344 @@
-# Saddha.org — Sri Lankan Buddhist Temple Directory
+# 🪷 Saddha.org — Sri Lankan Buddhist Temple Directory
 
-A full-stack web application that maps and connects every Sri Lankan Buddhist temple across all 50 US states. Built for Ven. Manthreethenne Saddhaloka Thero to help devotees find their nearest temple and explore the Buddhist community across America.
-
----
-
-## Tech Stack
-
-| Layer    | Technology                                          |
-|----------|-----------------------------------------------------|
-| Client   | React 18, React Router v6, Vite, CSS                |
-| Admin    | React 18, React Router v6, Vite                     |
-| Backend  | Node.js, Express.js                                 |
-| ORM      | Prisma ORM                                          |
-| Database | MongoDB Atlas                                       |
-| Storage  | Local Storage                         |
-| Geocoding| OpenCage API                                        |
-| Auth     | JWT + bcryptjs                                      |
+> A full-stack web application mapping every Sri Lankan Buddhist temple across all 50 US states. Built for **Ven. Manthreethenne Saddhaloka Thero** to help devotees find their nearest temple and explore the Buddhist community across America.
 
 ---
 
-## Project Structure
+## 📋 Table of Contents
+
+- [Tech Stack](#-tech-stack)
+- [Project Structure](#-project-structure)
+- [Prerequisites](#-prerequisites)
+- [Getting Started](#-getting-started)
+- [Running the Apps](#-running-the-apps)
+- [Admin Login](#-admin-login)
+- [Environment Variables](#-environment-variables)
+- [API Reference](#-api-reference)
+
+---
+
+## 🛠 Tech Stack
+
+| Layer    | Technology                      |
+|----------|---------------------------------|
+| Client   | React 18, React Router v6, Vite |
+| Admin    | React 18, React Router v6, Vite |
+| Backend  | Node.js, Express.js             |
+| ORM      | Prisma ORM                      |
+| Database | SQLite (`server/prisma/dev.db`) |
+| Storage  | Local disk (`server/uploads/`)  |
+| Auth     | JWT + bcryptjs                  |
+
+> The database is a single local file and images are saved to a local folder — no cloud services required.
+
+---
+
+## 📁 Project Structure
 
 ```
-Project-Shradha/
-├── client/                        # Public-facing React app
-│   ├── src/
-│   │   ├── assets/                # Images and static files
-│   │   ├── components/            # Navbar, Footer, AboutSection, TempleDetails
-│   │   ├── pages/                 # Home, About, Contact, MapPage, MonkProfile
-│   │   ├── data/                  # temples.js (static fallback data)
-│   │   ├── utils/                 # temple.js helpers
-│   │   ├── App.jsx
-│   │   └── main.jsx
-│   ├── vite.config.js             # Dev proxy → http://localhost:5000
-│   └── package.json
+Project-Shradha-2/
+├── admin/               ← Admin panel (React + Vite)
+│   └── src/
+│       ├── components/
+│       ├── context/
+│       └── pages/
 │
-├── admin/                         # Admin dashboard (separate React app)
-│   ├── src/
-│   │   ├── components/            # Layout, Sidebar, Topbar
-│   │   ├── context/               # AuthContext
-│   │   └── pages/                 # Dashboard, Temples, TempleForm, Monks,
-│   │                              # MonkForm, Events, EventForm, Massages,
-│   │                              # MediaLibrary, MapManagement, Settings, Login
-│   ├── vite.config.js             # Dev proxy → http://localhost:5000
-│   └── package.json
+├── client/              ← Public-facing site (React + Vite)
+│   └── src/
+│       ├── components/
+│       ├── pages/
+│       ├── data/
+│       └── utils/
 │
-├── server/                        # Express API
+├── server/              ← Express API server
 │   ├── prisma/
-│   │   └── schema.prisma          # MongoDB models
-│   ├── src/
-│   │   ├── config/                # cloudinary.js, prisma.js
-│   │   ├── middleware/            # auth.js (JWT), upload.js (Multer)
-│   │   ├── routes/                # All API route files
-│   │   ├── services/              # cloudinaryService.js
-│   │   ├── utils/                 # imageUrls.js
-│   │   └── index.js               # App entry point
-│   ├── scripts/
-│   │   ├── seedAdmin.js           # Seed first admin user
-│   │   └── clearLocalImages.js
-│   ├── .env.example               # Environment variable template
-│   └── package.json
+│   │   ├── schema.prisma
+│   │   └── dev.db       ← SQLite database file
+│   ├── uploads/         ← Uploaded images
+│   └── src/
+│       ├── config/
+│       ├── middleware/
+│       ├── routes/
+│       ├── services/
+│       └── utils/
 │
-├── package.json                   # Root scripts (optional)
-└── README.md
+└── package.json         ← Root scripts (shortcuts)
 ```
 
 ---
 
-## Getting Started
+## ✅ Prerequisites
 
-### Prerequisites
+Make sure you have both of these installed before continuing:
 
-- Node.js v18+
-- A [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) cluster
-- A [Cloudinary](https://cloudinary.com) account
-- An [OpenCage](https://opencagedata.com/api) API key
+- **Node.js v18 or higher** — [Download](https://nodejs.org)
+- **Git** — [Download](https://git-scm.com)
 
 ---
 
-### 1. Clone the repository
+## 🚀 Getting Started
+
+Follow these steps **in order** — every step is required for a working system.
+
+### Step 1 — Clone the repository
 
 ```bash
-git clone https://github.com/shanuka-jay/Project-Shradha.git
-cd Project-Shradha
+git clone <your-repo-url>
+cd Project-Shradha-2
 ```
 
----
+### Step 2 — Install dependencies
 
-### 2. Set up the Backend
+Install dependencies for all three apps:
+
+```bash
+npm install --prefix server
+npm install --prefix client
+npm install --prefix admin
+```
+
+### Step 3 — Generate the Prisma client
 
 ```bash
 cd server
-cp .env.example .env
+npx prisma generate
 ```
 
-Open `.env` and fill in all values (see [Environment Variables](#environment-variables) below).
+### Step 4 — Create the database tables
 
 ```bash
-npm install
-npx prisma generate
-npx prisma db push
+npm run db:push
+```
+
+> This creates all the required tables in `dev.db`. **You must run this before seeding** — skipping it will cause the next step to fail with a "table does not exist" error.
+
+### Step 5 — Seed the admin user
+
+```bash
+npm run seed:admin
+```
+
+> Creates the first admin account (`admin@saddha.org`). Only run this once.
+
+### Step 6 — (Optional) Seed temple data
+
+```bash
+node prisma/seed.js
+```
+
+> Populates the database with 73 Sri Lankan Buddhist temples across the US (no images). Skip this if you prefer to add temples manually through the admin panel.
+
+---
+
+## ▶️ Running the Apps
+
+You need **three separate terminals** — one for each app.
+
+### Terminal 1 — API Server
+
+```bash
+cd server
 npm run dev
 ```
 
-Server runs at **http://localhost:5000**
+### Terminal 2 — Public Client
 
-Seed the first admin account:
 ```bash
+cd client
+npm run dev
+```
+
+### Terminal 3 — Admin Panel
+
+```bash
+cd admin
+npm run dev
+```
+
+Once all three are running, open:
+
+| App          | URL                        |
+|--------------|----------------------------|
+| 🌐 Public site | http://localhost:3000    |
+| 🔧 Admin panel | http://localhost:5173    |
+| ⚙️ API server  | http://localhost:5001    |
+
+---
+
+## 🔑 Admin Login
+
+```
+Email:    admin@saddha.org
+Password: Admin@1234
+```
+
+> **Important:** Change this password immediately after your first login via the Settings page.
+
+---
+
+## ⚙️ Environment Variables
+
+The server ships with a `.env` file that works out of the box for local development. No changes are needed to get started.
+
+If you need to customize, edit `server/.env` with these keys:
+
+```env
+DATABASE_URL="file:./dev.db"
+PORT=5001
+JWT_SECRET=saddha-super-secret-key-change-in-production
+ADMIN_APP_URL=http://localhost:5173
+```
+
+> **Production note:** Always replace `JWT_SECRET` with a strong random string before deploying.
+
+---
+
+## 🗄️ Database & Server Scripts
+
+Run these from inside the `server/` directory:
+
+| Command              | Description                                  |
+|----------------------|----------------------------------------------|
+| `npm run dev`        | Start server with hot-reload (nodemon)       |
+| `npm run start`      | Start server normally (production)           |
+| `npm run db:push`    | Apply Prisma schema changes to `dev.db`      |
+| `npm run db:studio`  | Open Prisma Studio (visual DB browser)       |
+| `npm run generate`   | Regenerate the Prisma client                 |
+| `npm run seed:admin` | Create the first admin user (run only once)  |
+
+> ⚠️ Do **not** re-run `db:push` or `seed:admin` after initial setup — `db:push` will wipe data on schema conflicts and `seed:admin` will attempt to create a duplicate admin.
+
+### Root-level shortcuts
+
+These can also be run from the project root:
+
+```bash
+npm run dev:server
+npm run dev:client
+npm run dev:admin
+npm run db:push
+npm run db:studio
 npm run seed:admin
 ```
 
 ---
 
-### 3. Set up the Client
-
-```bash
-cd ../client
-npm install
-npm run dev
-```
-
-Client runs at **http://localhost:3000**
-
----
-
-### 4. Set up the Admin Panel
-
-```bash
-cd ../admin
-npm install
-npm run dev
-```
-
-Admin panel runs at **http://localhost:5173**
-
----
-
-## Environment Variables
-
-Create `server/.env` from `server/.env.example`:
-
-```env
-# MongoDB Atlas connection string
-DATABASE_URL="mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>?retryWrites=true&w=majority"
-
-# Server port (defaults to 5000)
-PORT=5000
-
-# OpenCage Geocoding API
-OPENCAGE_KEY=your_opencage_api_key
-
-# Cloudinary
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-
-# Admin password reset email (Brevo Transactional API)
-ADMIN_APP_URL=http://localhost:5173
-BREVO_API_KEY=xkeysib-your_brevo_api_key
-BREVO_SENDER_EMAIL=no-reply@saddha.org
-BREVO_SENDER_NAME=Saddha.org Admin
-```
-
----
-
-## API Reference
+## 📡 API Reference
 
 ### Public Endpoints
 
-| Method | Endpoint              | Description                   |
-|--------|-----------------------|-------------------------------|
-| GET    | /api/temples          | List all temples               |
-| GET    | /api/temples/state/:state | Temples by US state        |
-| GET    | /api/temples/:id      | Single temple detail           |
-| GET    | /api/monks            | List all published monks       |
-| GET    | /api/monks/:id        | Single monk profile            |
-| GET    | /api/events           | List all events                |
-| GET    | /api/media            | List all media (Cloudinary)    |
-| POST   | /api/contact          | Submit contact form            |
+No authentication required.
 
-### Admin Endpoints (JWT required)
-
-| Method | Endpoint                              | Description                    |
-|--------|---------------------------------------|--------------------------------|
-| POST   | /api/admin/login                      | Admin login → returns JWT      |
-| POST   | /api/admin/forgot-password            | Generate admin reset link      |
-| POST   | /api/admin/reset-password             | Reset admin password by token  |
-| GET    | /api/admin/me                         | Current admin profile          |
-| GET    | /api/admin/stats                      | Dashboard stats                |
-| GET    | /api/admin/temples                    | List temples                   |
-| POST   | /api/admin/temples                    | Create temple                  |
-| PUT    | /api/admin/temples/:id                | Update temple                  |
-| PATCH  | /api/admin/temples/:id/gallery        | Update temple gallery          |
-| PATCH  | /api/admin/temples/:id/main-image     | Update main image              |
-| DELETE | /api/admin/temples/:id                | Delete temple                  |
-| GET    | /api/admin/monks                      | List monks                     |
-| POST   | /api/admin/monks                      | Create monk                    |
-| PUT    | /api/admin/monks/:id                  | Update monk                    |
-| PATCH  | /api/admin/monks/:id/photo            | Update monk photo              |
-| DELETE | /api/admin/monks/:id                  | Delete monk                    |
-| GET    | /api/admin/events                     | List events                    |
-| POST   | /api/admin/events                     | Create event                   |
-| PUT    | /api/admin/events/:id                 | Update event                   |
-| DELETE | /api/admin/events/:id                 | Delete event                   |
-| POST   | /api/admin/media/upload               | Upload images to Cloudinary    |
-| GET    | /api/admin/media                      | List media files               |
-| DELETE | /api/admin/media/:publicId            | Delete media from Cloudinary   |
-| GET    | /api/admin/messages                   | List contact messages          |
-| PATCH  | /api/admin/messages/:id/read          | Mark message as read           |
-| PATCH  | /api/admin/messages/:id/archive       | Archive message                |
-| DELETE | /api/admin/messages/:id               | Delete message                 |
-| PUT    | /api/admin/change-password            | Change admin password          |
+| Method | Endpoint          | Description              |
+|--------|-------------------|--------------------------|
+| GET    | /api/temples      | List all temples         |
+| GET    | /api/temples/:id  | Single temple detail     |
+| GET    | /api/monks        | List all monks           |
+| GET    | /api/monks/:id    | Single monk profile      |
+| GET    | /api/events       | List all events          |
+| GET    | /api/media        | List all uploaded images |
+| POST   | /api/contact      | Submit contact form      |
 
 ---
 
-## Useful Scripts
+### Admin Endpoints
 
-Run inside the `server/` directory:
+All admin endpoints require a valid **JWT token** in the request header.
 
-```bash
-npm run dev           # Start server with nodemon (hot reload)
-npm run start         # Start server in production
-npm run db:push       # Sync Prisma schema to MongoDB
-npm run db:studio     # Open Prisma Studio (visual DB browser)
-npm run generate      # Regenerate Prisma client after schema changes
-npm run seed:admin    # Create the first admin user
-```
+#### 🔐 Authentication
+
+| Method | Endpoint                       | Description                        |
+|--------|--------------------------------|------------------------------------|
+| POST   | /api/admin/login               | Login and receive JWT token        |
+| POST   | /api/admin/forgot-password     | Request a password reset link      |
+| POST   | /api/admin/reset-password      | Reset password using token         |
+| GET    | /api/admin/me                  | Get current admin profile          |
+| GET    | /api/admin/stats               | Get dashboard summary stats        |
+| PUT    | /api/admin/change-password     | Update current admin password      |
+
+#### 🏛️ Temple Management
+
+| Method | Endpoint                                  | Description                          |
+|--------|-------------------------------------------|--------------------------------------|
+| GET    | /api/admin/temples                        | List all temples                     |
+| GET    | /api/admin/temples/:id                    | Get temple detail                    |
+| POST   | /api/admin/temples                        | Create a new temple                  |
+| PUT    | /api/admin/temples/:id                    | Update temple                        |
+| PATCH  | /api/admin/temples/:id/overview           | Update temple overview               |
+| PATCH  | /api/admin/temples/:id/history            | Update temple history                |
+| PATCH  | /api/admin/temples/:id/main-image         | Update main temple image             |
+| PATCH  | /api/admin/temples/:id/chief-monk-image   | Update chief monk image              |
+| PATCH  | /api/admin/temples/:id/gallery            | Update gallery images                |
+| PATCH  | /api/admin/temples/:id/services           | Update services list                 |
+| DELETE | /api/admin/temples/:id                    | Delete temple                        |
+| POST   | /api/admin/temples/upload-monk-photo      | Upload chief monk photo              |
+
+#### 🧘 Monk Management
+
+| Method | Endpoint                      | Description                     |
+|--------|-------------------------------|---------------------------------|
+| GET    | /api/admin/monks              | List all monks                  |
+| GET    | /api/admin/monks/:id          | Get monk profile                |
+| POST   | /api/admin/monks              | Create a monk                   |
+| PUT    | /api/admin/monks/:id          | Update monk                     |
+| PATCH  | /api/admin/monks/:id/photo    | Update monk profile photo       |
+| DELETE | /api/admin/monks/:id          | Delete monk                     |
+| POST   | /api/admin/monks/upload-photo | Upload monk profile photo       |
+
+#### 📅 Event Management
+
+| Method | Endpoint                | Description          |
+|--------|-------------------------|----------------------|
+| GET    | /api/admin/events       | List all events      |
+| GET    | /api/admin/events/:id   | Get event detail     |
+| POST   | /api/admin/events       | Create an event      |
+| PUT    | /api/admin/events/:id   | Update event         |
+| DELETE | /api/admin/events/:id   | Delete event         |
+
+#### 🖼️ Media Management
+
+| Method | Endpoint                         | Description                        |
+|--------|----------------------------------|------------------------------------|
+| POST   | /api/admin/media/upload          | Upload gallery images              |
+| GET    | /api/admin/media                 | List gallery images                |
+| GET    | /api/admin/media/monks           | List monk profile photos           |
+| GET    | /api/admin/media/temple-monks    | List temple chief monk photos      |
+| DELETE | /api/admin/media/:publicId       | Delete an uploaded image           |
+
+#### 🗺️ Map Management
+
+| Method | Endpoint                          | Description                          |
+|--------|-----------------------------------|--------------------------------------|
+| GET    | /api/admin/map/overview           | Temple map overview                  |
+| GET    | /api/admin/map/missing            | Temples missing coordinates          |
+| PATCH  | /api/admin/map/:id/visibility     | Toggle map visibility for a temple   |
+| PATCH  | /api/admin/map/:id/coords         | Update temple coordinates            |
+| POST   | /api/admin/map/geocode            | Geocode a single address             |
+| POST   | /api/admin/map/bulk-geocode       | Bulk geocode all missing temples     |
+| GET    | /api/admin/map/duplicates         | Find duplicate coordinates           |
+
+#### ⚙️ Settings
+
+| Method | Endpoint                            | Description               |
+|--------|-------------------------------------|---------------------------|
+| GET    | /api/admin/settings/users           | List admin users          |
+| POST   | /api/admin/settings/users           | Create admin user         |
+| PUT    | /api/admin/settings/users/:id       | Update admin user         |
+| PUT    | /api/admin/settings/users/:id/role  | Update admin user role    |
+| DELETE | /api/admin/settings/users/:id       | Delete admin user         |
+| GET    | /api/admin/settings/site            | Get site settings         |
+| PUT    | /api/admin/settings/site            | Update site settings      |
+
+#### 💬 Messages
+
+| Method | Endpoint                              | Description             |
+|--------|---------------------------------------|-------------------------|
+| GET    | /api/admin/messages                   | List contact messages   |
+| PATCH  | /api/admin/messages/:id/read          | Mark message as read    |
+| PATCH  | /api/admin/messages/:id/archive       | Archive a message       |
+| PATCH  | /api/admin/messages/:id/unarchive     | Unarchive a message     |
+| DELETE | /api/admin/messages/:id               | Delete a message        |
 
 ---
 
-## Deployment Notes
-
-- Set `NODE_ENV=production` in your hosting environment
-- Configure `CORS` origins in `server/src/index.js` to match your production domain
-- Run `npm run build` inside `client/` and `admin/` to generate production bundles
-- Serve the built `dist/` folders via a static host (e.g. Vercel, Netlify) or Express static middleware
+*Built with 🙏 for the Sri Lankan Buddhist community across America.*

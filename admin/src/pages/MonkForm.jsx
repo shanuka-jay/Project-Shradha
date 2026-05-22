@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import { useAuth } from '../context/AuthContext'
 
 // ─── Empty state ─────────────────────────────────────────────────────────────
@@ -67,8 +68,6 @@ export default function MonkForm() {
   const [temples, setTemples] = useState([])
   const [loading, setLoading] = useState(false)
   const [fetchLoading, setFetchLoading] = useState(isEdit)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
   const [uploading, setUploading] = useState(false)
 
   // ── Fetch temples list ──────────────────────────────────────────────────────
@@ -121,28 +120,31 @@ export default function MonkForm() {
   // ── Handlers ───────────────────────────────────────────────────────────────
   function handleChange(e) {
     setForm(f => ({ ...f, [e.target.name]: e.target.value }))
-    setError(''); setSuccess('')
   }
   function handleSocial(e) {
     setForm(f => ({ ...f, socialLinks: { ...f.socialLinks, [e.target.name]: e.target.value } }))
   }
 
-  // ── Cloudinary upload — same pattern as TempleForm ─────────────────────────
+  // ── Photo upload — same pattern as TempleForm ─────────────────────────
   async function uploadPhotoFile(file) {
     setUploading(true)
+    const toastId = toast.loading('Uploading profile photo…')
     try {
       const fd = new FormData()
-      fd.append('images', file)
-      const res = await fetch('/api/admin/media/upload', {
+      fd.append('image', file)
+      const res = await fetch('/api/admin/monks/upload-photo', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: fd,
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Upload failed')
-      const url = data.files[0]?.url || ''
+      const url = data.url || ''
       setForm(f => ({ ...f, profilePhoto: url }))
-    } catch (err) { setError(err.message) }
+      toast.update(toastId, { render: 'Photo uploaded!', type: 'success', isLoading: false, autoClose: 2500 })
+    } catch (err) {
+      toast.update(toastId, { render: err.message || 'Upload failed.', type: 'error', isLoading: false, autoClose: 3500 })
+    }
     finally { setUploading(false) }
   }
 
@@ -154,14 +156,17 @@ export default function MonkForm() {
   // ── Submit ─────────────────────────────────────────────────────────────────
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!form.legalName.trim()) { setError('Legal name is required.'); return }
+    if (!form.legalName.trim()) {
+      toast.error('Legal name is required.')
+      return
+    }
     setLoading(true)
+    const toastId = toast.loading(isEdit ? 'Saving changes…' : 'Creating profile…')
     try {
       const payload = {
         ...form,
         languages:     form.languages.split(',').map(s => s.trim()).filter(Boolean),
         linkedTempleId: form.linkedTempleId || null,
-        // keep contactInfo in sync for backwards compat
         contactInfo:   form.email,
       }
       const url    = isEdit ? `/api/admin/monks/${id}` : '/api/admin/monks'
@@ -173,9 +178,14 @@ export default function MonkForm() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Save failed')
-      setSuccess(isEdit ? 'Profile updated.' : 'Profile created.')
+      toast.update(toastId, {
+        render: isEdit ? 'Profile updated successfully!' : 'Profile created successfully!',
+        type: 'success', isLoading: false, autoClose: 2500,
+      })
       if (!isEdit) setTimeout(() => navigate('/monks'), 1200)
-    } catch (err) { setError(err.message) }
+    } catch (err) {
+      toast.update(toastId, { render: err.message || 'Save failed.', type: 'error', isLoading: false, autoClose: 3500 })
+    }
     finally { setLoading(false) }
   }
 
@@ -253,9 +263,6 @@ export default function MonkForm() {
         <Link to="/monks" className="btn-back">← Back to Profiles</Link>
       </div>
 
-      {error && <div className="form-alert form-alert-error">⚠ {error}</div>}
-      {success && <div className="form-alert form-alert-success">✓ {success}</div>}
-
       <div className="mf-banner-note">
         <i className="fas fa-image" />
         The hero banner image on the public profile page is shared across all monk profiles — manage it in Media settings.
@@ -288,10 +295,10 @@ export default function MonkForm() {
 
               {/* Or paste URL */}
               <div style={{ marginTop: '1rem' }}>
-                <label style={lbl}>Or paste Cloudinary URL</label>
+                <label style={lbl}>Or paste Local Storage URL From Media Library</label>
                 <div className="mf-url-row">
                   <input style={{ ...inp, flex: 1 }} name="profilePhoto"
-                    value={form.profilePhoto} onChange={handleChange} placeholder="https://res.cloudinary.com/…" />
+                    value={form.profilePhoto} onChange={handleChange} placeholder="/uploads/…" />
                   {form.profilePhoto && (
                     <button type="button" className="mf-url-btn"
                       onClick={() => setForm(f => ({ ...f, profilePhoto: '' }))}>✕</button>

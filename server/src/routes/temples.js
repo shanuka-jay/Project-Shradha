@@ -8,8 +8,16 @@ function toClientFormat(temple) {
   const chiefMonkImage = normalizeImageUrl(temple.chiefMonkImage);
   const galleryImages  = normalizeImageUrlArray(temple.galleryImages);
 
-  const services = (temple.services || []).map(s => {
-    try { return JSON.parse(s); } catch { return { name: s, icon: 'star', time: '' }; }
+  const rawServices = (() => {
+    if (Array.isArray(temple.services)) return temple.services;
+    if (typeof temple.services === 'string') {
+      try { const p = JSON.parse(temple.services); return Array.isArray(p) ? p : []; } catch { return []; }
+    }
+    return [];
+  })();
+  const services = rawServices.map(s => {
+    if (s && typeof s === 'object') return s;
+    try { return JSON.parse(s); } catch { return { name: String(s), icon: 'star', time: '' }; }
   });
 
   return {
