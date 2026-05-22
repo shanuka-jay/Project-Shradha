@@ -13,7 +13,7 @@ A full-stack web application that maps and connects every Sri Lankan Buddhist te
 | Backend  | Node.js, Express.js                                 |
 | ORM      | Prisma ORM                                          |
 | Database | MongoDB Atlas                                       |
-| Storage  | Cloudinary (images & media)                         |
+| Storage  | Local Storage                         |
 | Geocoding| OpenCage API                                        |
 | Auth     | JWT + bcryptjs                                      |
 
